@@ -2,494 +2,491 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>판교 점심 뽑기</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f3; min-height: 100vh;
-    display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-  }
-  .container {
-    background: #fff; border-radius: 16px; padding: 2.5rem 2rem;
-    max-width: 440px; width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-  }
-  .page { display: none; }
-  .page.show { display: block; }
-  h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 4px; text-align:center; }
-  .subtitle { font-size: 13px; color: #888; margin-bottom: 2rem; text-align:center; }
-  .sync-bar { font-size: 12px; color: #aaa; text-align:center; margin-bottom: 1rem; min-height: 18px; }
-  .sync-bar.ok { color: #1D9E75; }
-  .sync-bar.err { color: #E24B4A; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f0f4f8; min-height: 100vh;
+  display: flex; align-items: flex-start; justify-content: center;
+}
+.app {
+  width: 100%; max-width: 440px; min-height: 100vh;
+  background: #fff; position: relative;
+  display: flex; flex-direction: column;
+}
 
-  .result-card {
-    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 14px;
-    padding: 2rem 1.5rem; min-height: 160px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 10px;
-    margin-bottom: 1.25rem; text-align: center;
-  }
-  .placeholder { color: #aaa; font-size: 15px; }
-  .result-name { font-size: 30px; font-weight: 700; color: #111; }
-  .badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  .badge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
-  .badge-genre { background: #EEEDFE; color: #3C3489; }
-  .badge-loc { background: #E1F5EE; color: #085041; }
-  .result-desc { font-size: 14px; color: #666; }
-  .result-stats { font-size: 13px; color: #888; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
-  .result-last-comment { font-size: 12px; color: #aaa; font-style: italic; max-width: 260px; text-align: center; line-height: 1.4; }
+/* ── 상단 헤더 ── */
+.app-header {
+  padding: 1.25rem 1.5rem .75rem;
+  border-bottom: 1px solid #f0f0ee;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: #fff; z-index: 10;
+}
+.app-header h1 { font-size: 17px; font-weight: 700; color: #111; }
+.app-header .sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+.btn-changelog {
+  font-size: 11px; color: #aaa; background: #f5f5f3; border: none;
+  border-radius: 20px; padding: 4px 10px; cursor: pointer; transition: background .12s;
+}
+.btn-changelog:hover { background: #eee; }
 
-  .review-box {
-    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 14px;
-    padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; text-align: left; display: none;
-  }
-  .review-box.show { display: block; }
-  .review-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 10px; }
-  .stars { display: flex; gap: 6px; margin-bottom: 12px; }
-  .star { font-size: 26px; cursor: pointer; color: #ddd; transition: color .1s, transform .1s; line-height: 1; }
-  .star.on { color: #f5a623; }
-  .star:hover { transform: scale(1.15); }
-  .comment-input {
-    width: 100%; border: 1px solid #e8e8e5; border-radius: 8px;
-    padding: 9px 12px; font-size: 13px; color: #333; resize: none;
-    font-family: inherit; background: #fff; margin-bottom: 10px; outline: none;
-  }
-  .comment-input:focus { border-color: #185FA5; }
-  .btn-save {
-    width: 100%; background: #fff; color: #185FA5; border: 1.5px solid #185FA5;
-    border-radius: 8px; font-size: 14px; font-weight: 600; padding: 10px;
-    cursor: pointer; transition: background .15s;
-  }
-  .btn-save:hover { background: #f0f6ff; }
-  .btn-pick {
-    width: 100%; background: #185FA5; color: #fff; border: none;
-    border-radius: 10px; font-size: 17px; font-weight: 600; padding: 15px;
-    cursor: pointer; transition: background .15s, transform .1s; margin-bottom: .75rem;
-  }
-  .btn-pick:hover { background: #145088; }
-  .btn-pick:active { transform: scale(0.98); }
-  .btn-pick:disabled { background: #b0c4d8; cursor: default; }
-  .btn-list {
-    width: 100%; background: #fff; color: #555; border: 1px solid #e0e0dc;
-    border-radius: 10px; font-size: 14px; font-weight: 500; padding: 11px;
-    cursor: pointer; transition: background .15s; margin-bottom: 1.5rem;
-  }
-  .btn-list:hover { background: #f5f5f3; }
-  .count { font-size: 12px; color: #aaa; margin-bottom: 1.25rem; text-align:center; }
+/* ── 페이지 콘텐츠 ── */
+.pages { flex: 1; overflow-y: auto; padding-bottom: 70px; }
+.page { display: none; padding: 1.25rem 1.5rem; }
+.page.show { display: block; }
 
-  .history { text-align: left; }
-  .history-title { font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
-  .history-list { list-style: none; }
-  .history-list li {
-    font-size: 13px; color: #555; padding: 9px 10px; border-bottom: 1px solid #f0f0ee;
-    cursor: pointer; border-radius: 8px; transition: background .12s;
-  }
-  .history-list li:hover { background: #f7f7f5; }
-  .history-list li:last-child { border-bottom: none; }
-  .history-list li.active { background: #f0f6ff; }
-  .history-row { display: flex; justify-content: space-between; align-items: center; }
-  .history-name { font-weight: 500; }
-  .history-right { display: flex; align-items: center; gap: 6px; }
-  .history-stars { color: #f5a623; font-size: 12px; letter-spacing: -1px; }
-  .history-time { color: #bbb; font-size: 12px; }
-  .history-comment { font-size: 12px; color: #aaa; margin-top: 3px; font-style: italic; }
-  .edit-hint { font-size: 11px; color: #b0c4d8; border: 1px solid #d8e8f5; border-radius: 10px; padding: 2px 7px; }
+/* ── 오류 바 ── */
+.sync-bar { font-size: 12px; color: #E24B4A; text-align:center; min-height: 0; margin-bottom: .5rem; }
 
-  /* 전체목록 */
-  .list-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
-  .btn-back { background: none; border: none; cursor: pointer; font-size: 20px; color: #555; padding: 4px 6px; border-radius: 8px; transition: background .12s; line-height: 1; }
-  .btn-back:hover { background: #f0f0ee; }
-  .list-title { font-size: 18px; font-weight: 600; color: #111; }
-  .list-count { font-size: 13px; color: #aaa; margin-left: auto; }
-  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
-  .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid #e0e0dc; background: #fff; color: #666; cursor: pointer; transition: all .12s; }
-  .filter-btn.on { background: #185FA5; color: #fff; border-color: #185FA5; }
-  .all-list { list-style: none; }
-  .all-list li { padding: 11px 10px; border-bottom: 1px solid #f0f0ee; cursor: pointer; border-radius: 10px; transition: background .12s; }
-  .all-list li:hover { background: #f7f7f5; }
-  .all-list li:last-child { border-bottom: none; }
-  .all-list li.active { background: #f0f6ff; }
-  .all-row { display: flex; justify-content: space-between; align-items: center; }
-  .all-name { font-size: 14px; font-weight: 500; color: #111; }
-  .all-meta { font-size: 12px; color: #aaa; margin-top: 3px; }
-  .all-stats { text-align: right; }
-  .all-avg { font-size: 14px; font-weight: 600; color: #f5a623; }
-  .all-visits { font-size: 11px; color: #bbb; margin-top: 2px; }
-  .no-review { font-size: 12px; color: #ddd; }
-  .list-review-box {
-    background: #f0f6ff; border: 1px solid #c8ddf5; border-radius: 12px;
-    padding: 1.25rem 1.5rem; margin: 8px 0 4px; display: none; text-align: left;
-  }
-  .list-review-box.show { display: block; }
+/* ── 베스트/꽝 가로 카드 ── */
+.weekly-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem;
+}
+.weekly-card {
+  border-radius: 12px; padding: .875rem 1rem; display: none; text-align: center;
+}
+.weekly-card.show { display: block; }
+.weekly-card.best { background: #fffbef; border: 1px solid #f5d87a; }
+.weekly-card.worst { background: #fff4f4; border: 1px solid #f5aaaa; }
+.weekly-card-title { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
+.best .weekly-card-title { color: #c8962a; }
+.worst .weekly-card-title { color: #c43a3a; }
+.weekly-card-name { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.weekly-card-stats { font-size: 11px; }
+.best .weekly-card-stats { color: #c8962a; }
+.worst .weekly-card-stats { color: #c43a3a; }
 
-  /* 버전 바 */
-  .version-bar {
-    text-align: center; margin-top: 2rem;
-    padding-top: 1.25rem; border-top: 1px solid #f0f0ee;
-  }
-  .version-btn {
-    font-size: 12px; color: #bbb; background: none; border: none;
-    cursor: pointer; padding: 4px 8px; border-radius: 6px;
-    transition: background .12s, color .12s;
-  }
-  .version-btn:hover { background: #f5f5f3; color: #888; }
+/* ── 결과 카드 ── */
+.result-card {
+  background: #f7f9fc; border: 1.5px solid #e4eaf2; border-radius: 18px;
+  padding: 2rem 1.5rem; min-height: 180px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 1.25rem; text-align: center; transition: border-color .2s;
+}
+.result-card.picked { border-color: #185FA5; background: #f0f6ff; }
+.placeholder { color: #bbb; font-size: 14px; line-height: 1.6; }
+.result-name { font-size: 34px; font-weight: 800; color: #111; letter-spacing: -.5px; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
+.badge-genre { background: #EEEDFE; color: #3C3489; }
+.badge-loc { background: #E1F5EE; color: #085041; }
+.result-desc { font-size: 13px; color: #888; }
+.result-stats { font-size: 13px; color: #888; display: flex; gap: 8px; align-items: center; }
+.result-stats b { color: #f5a623; }
+.result-last-comment { font-size: 12px; color: #aaa; font-style: italic; max-width: 260px; line-height: 1.5; }
 
-  /* 모달 */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-    display: none; align-items: center; justify-content: center;
-    z-index: 999; padding: 1.5rem;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    background: #fff; border-radius: 16px; padding: 1.75rem 1.5rem;
-    max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-  }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .modal-title { font-size: 16px; font-weight: 600; color: #111; }
-  .modal-close { background: none; border: none; font-size: 18px; color: #aaa; cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; transition: background .12s; }
-  .modal-close:hover { background: #f0f0ee; color: #555; }
-  .changelog { list-style: none; }
-  .changelog > li { padding: 14px 0; border-bottom: 1px solid #f0f0ee; }
-  .changelog > li:last-child { border-bottom: none; }
-  .cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .cl-version { font-size: 12px; font-weight: 700; color: #fff; background: #185FA5; padding: 3px 10px; border-radius: 20px; }
-  .cl-title { font-size: 14px; font-weight: 600; color: #111; }
-  .cl-items { list-style: none; padding-left: 2px; }
-  .cl-items li { font-size: 13px; color: #666; line-height: 1.8; display: flex; gap: 6px; }
-  .cl-items li::before { content: "·"; color: #185FA5; font-weight: 700; flex-shrink: 0; }
+/* ── 리뷰 박스 ── */
+.review-box {
+  background: #f7f9fc; border: 1px solid #dce6f5; border-radius: 14px;
+  padding: 1.125rem 1.25rem; margin-bottom: 1.25rem; display: none;
+  animation: slideDown .2s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.review-box.show { display: block; }
+.review-label { font-size: 12px; color: #185FA5; font-weight: 600; margin-bottom: 10px; }
+.nickname-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.nickname-label { font-size: 12px; color: #aaa; white-space: nowrap; }
+.nickname-input {
+  flex: 1; border: 1px solid #dce6f5; border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; color: #333;
+  font-family: inherit; background: #fff; outline: none;
+}
+.nickname-input:focus { border-color: #185FA5; }
+.stars { display: flex; gap: 4px; margin-bottom: 10px; }
+.star { font-size: 28px; cursor: pointer; color: #e0e0e0; transition: color .1s, transform .1s; line-height: 1; }
+.star.on { color: #f5a623; }
+.star:hover { transform: scale(1.2); }
+.comment-input {
+  width: 100%; border: 1px solid #dce6f5; border-radius: 8px;
+  padding: 9px 12px; font-size: 13px; color: #333; resize: none;
+  font-family: inherit; background: #fff; margin-bottom: 10px; outline: none;
+}
+.comment-input:focus { border-color: #185FA5; }
+.btn-save {
+  width: 100%; background: #185FA5; color: #fff; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 600; padding: 10px;
+  cursor: pointer; transition: background .15s;
+}
+.btn-save:hover { background: #145088; }
 
-  /* 토글 스위치 */
-  .toggle-wrap {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; margin-bottom: 1rem;
-  }
-  .toggle-label { font-size: 13px; color: #666; }
-  .toggle-label.on { color: #185FA5; font-weight: 500; }
-  .toggle {
-    position: relative; width: 40px; height: 22px;
-    background: #e0e0dc; border-radius: 11px; cursor: pointer;
-    transition: background .2s; flex-shrink: 0;
-  }
-  .toggle.on { background: #185FA5; }
-  .toggle::after {
-    content: ''; position: absolute; top: 3px; left: 3px;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: #fff; transition: transform .2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-  .toggle.on::after { transform: translateX(18px); }
+/* ── 뽑기 버튼 ── */
+.pick-section { margin-bottom: 1.25rem; }
+.btn-pick {
+  width: 100%; background: #185FA5; color: #fff; border: none;
+  border-radius: 14px; font-size: 18px; font-weight: 700; padding: 17px;
+  cursor: pointer; transition: background .15s, transform .1s;
+  letter-spacing: -.2px;
+}
+.btn-pick:hover { background: #145088; }
+.btn-pick:active { transform: scale(0.98); }
+.btn-pick:disabled { background: #b0c4d8; cursor: default; }
 
-  /* 룰렛 */
-  .roulette-wrap {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 6px; width: 100%;
-  }
-  .roulette-strip-outer {
-    width: 100%; overflow: hidden; border-radius: 10px;
-    border: 2px solid #185FA5; background: #fff; position: relative; height: 52px;
-  }
-  .roulette-strip-outer::before, .roulette-strip-outer::after {
-    content: ''; position: absolute; top: 0; bottom: 0; width: 40px; z-index: 2; pointer-events: none;
-  }
-  .roulette-strip-outer::before { left: 0; background: linear-gradient(to right, #fff, transparent); }
-  .roulette-strip-outer::after { right: 0; background: linear-gradient(to left, #fff, transparent); }
-  .roulette-center-mark {
-    position: absolute; left: 50%; top: 4px; bottom: 4px;
-    width: 2px; background: #185FA5; transform: translateX(-50%); z-index: 3;
-    border-radius: 2px;
-  }
-  .roulette-strip {
-    display: flex; align-items: center; height: 52px;
-    white-space: nowrap; will-change: transform;
-  }
-  .roulette-item {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 120px; padding: 0 16px; height: 44px; margin: 4px 4px;
-    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 8px;
-    font-size: 14px; font-weight: 500; color: #333; flex-shrink: 0;
-  }
-  .roulette-item.winner {
-    background: #185FA5; color: #fff; border-color: #185FA5;
-    transform: scale(1.05);
-  }
-  .roulette-label { font-size: 12px; color: #aaa; }
+/* ── 2주 토글 ── */
+.toggle-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1rem; background: #f7f9fc; border-radius: 10px;
+  margin-bottom: 1.25rem; cursor: pointer;
+}
+.toggle-text { font-size: 13px; color: #555; }
+.toggle-text b { color: #185FA5; font-weight: 600; }
+.toggle {
+  position: relative; width: 38px; height: 21px;
+  background: #ddd; border-radius: 11px; transition: background .2s; flex-shrink: 0;
+}
+.toggle.on { background: #185FA5; }
+.toggle::after {
+  content: ''; position: absolute; top: 2.5px; left: 2.5px;
+  width: 16px; height: 16px; border-radius: 50%; background: #fff;
+  transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(17px); }
 
-  /* 팀 베스트 */
-  .best-card {
-    background: linear-gradient(135deg, #fff9ee 0%, #fffdf5 100%);
-    border: 1px solid #f5d87a; border-radius: 14px;
-    padding: 1rem 1.25rem; margin-bottom: 1.25rem;
-    display: none; text-align: center;
-  }
-  .best-card.show { display: block; }
-  .best-title { font-size: 11px; color: #c8962a; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-  .best-name { font-size: 20px; font-weight: 700; color: #111; margin-bottom: 4px; }
-  .best-stats { font-size: 13px; color: #c8962a; }
+/* ── 히스토리 카드 ── */
+.history-section { margin-bottom: 1rem; }
+.section-title {
+  font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 10px;
+}
+.history-cards { display: flex; flex-direction: column; gap: 8px; }
+.history-card {
+  background: #f7f9fc; border: 1px solid #e8eef5; border-radius: 12px;
+  padding: 10px 12px; cursor: pointer; transition: background .12s, border-color .12s;
+}
+.history-card:hover { background: #eef4ff; border-color: #c5d9f5; }
+.history-card.active { background: #eef4ff; border-color: #185FA5; }
+.hc-row { display: flex; justify-content: space-between; align-items: center; }
+.hc-name { font-size: 14px; font-weight: 600; color: #111; }
+.hc-right { display: flex; align-items: center; gap: 6px; }
+.hc-stars { color: #f5a623; font-size: 12px; letter-spacing: -1px; }
+.hc-time { font-size: 12px; color: #bbb; }
+.hc-comment { font-size: 12px; color: #888; margin-top: 4px; font-style: italic; }
+.hc-hint { font-size: 11px; color: #b0c4d8; border: 1px solid #d0e4f5; border-radius: 8px; padding: 2px 7px; }
 
-  /* 꽝 카드 */
-  .worst-card {
-    background: linear-gradient(135deg, #fff2f2 0%, #fff8f8 100%);
-    border: 1px solid #f5a7a7; border-radius: 14px;
-    padding: 1rem 1.25rem; margin-bottom: 1.25rem;
-    display: none; text-align: center;
-  }
-  .worst-card.show { display: block; }
-  .worst-title { font-size: 11px; color: #c43a3a; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-  .worst-name { font-size: 20px; font-weight: 700; color: #111; margin-bottom: 4px; }
-  .worst-stats { font-size: 13px; color: #c43a3a; }
+/* ── 전체목록 페이지 ── */
+.page-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem;
+}
+.btn-back {
+  width: 32px; height: 32px; background: #f5f5f3; border: none;
+  border-radius: 50%; cursor: pointer; font-size: 16px; color: #555;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s; flex-shrink: 0;
+}
+.btn-back:hover { background: #eee; }
+.page-title { font-size: 17px; font-weight: 700; color: #111; }
+.page-count { font-size: 13px; color: #aaa; margin-left: auto; }
 
-  /* 닉네임 */
-  .nickname-wrap {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 10px;
-  }
-  .nickname-input {
-    flex: 1; border: 1px solid #e8e8e5; border-radius: 8px;
-    padding: 7px 10px; font-size: 13px; color: #333;
-    font-family: inherit; background: #fff; outline: none;
-  }
-  .nickname-input:focus { border-color: #185FA5; }
-  .nickname-label { font-size: 12px; color: #aaa; white-space: nowrap; }
+.filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 4px; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-btn {
+  font-size: 12px; padding: 5px 13px; border-radius: 20px; white-space: nowrap;
+  border: 1.5px solid #e0e0dc; background: #fff; color: #666; cursor: pointer; transition: all .12s;
+}
+.filter-btn.on { background: #185FA5; color: #fff; border-color: #185FA5; }
 
-  /* 월간 랭킹 */
-  .rank-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
-  .rank-title { font-size: 18px; font-weight: 600; color: #111; }
-  .rank-selector {
-    display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;
-  }
-  .rank-select {
-    flex: 1; border: 1px solid #e0e0dc; border-radius: 8px;
-    padding: 8px 10px; font-size: 13px; color: #333;
-    font-family: inherit; background: #fff; outline: none; cursor: pointer;
-  }
-  .rank-select:focus { border-color: #185FA5; }
-  .rank-list { list-style: none; }
-  .rank-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 10px; border-bottom: 1px solid #f0f0ee;
-    border-radius: 10px; transition: background .12s;
-  }
-  .rank-item:hover { background: #f7f7f5; }
-  .rank-item:last-child { border-bottom: none; }
-  .rank-num {
-    font-size: 18px; font-weight: 700; min-width: 28px; text-align: center;
-  }
-  .rank-num.gold { color: #f5a623; }
-  .rank-num.silver { color: #aaa; }
-  .rank-num.bronze { color: #cd7f32; }
-  .rank-num.normal { color: #ccc; }
-  .rank-info { flex: 1; }
-  .rank-name { font-size: 15px; font-weight: 500; color: #111; margin-bottom: 2px; }
-  .rank-meta { font-size: 12px; color: #aaa; }
-  .rank-score { text-align: right; }
-  .rank-avg { font-size: 16px; font-weight: 700; color: #f5a623; }
-  .rank-count { font-size: 11px; color: #bbb; margin-top: 2px; }
-  .rank-empty { text-align: center; color: #bbb; font-size: 14px; padding: 2rem 0; }
+.all-list { list-style: none; }
+.all-item {
+  display: flex; align-items: center; padding: 12px 10px;
+  border-bottom: 1px solid #f0f0ee; cursor: pointer;
+  border-radius: 10px; transition: background .12s; gap: 12px;
+}
+.all-item:hover { background: #f7f9fc; }
+.all-item:last-child { border-bottom: none; }
+.all-item.active { background: #eef4ff; }
+.all-info { flex: 1; }
+.all-name { font-size: 14px; font-weight: 600; color: #111; }
+.all-meta { font-size: 12px; color: #aaa; margin-top: 2px; }
+.all-stats { text-align: right; flex-shrink: 0; }
+.all-avg { font-size: 14px; font-weight: 700; color: #f5a623; }
+.all-visits { font-size: 11px; color: #bbb; margin-top: 2px; }
+.no-review { font-size: 12px; color: #ddd; }
 
-  .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
-  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.list-review-box {
+  background: #eef4ff; border: 1px solid #c5d9f5; border-radius: 12px;
+  padding: 1.125rem 1.25rem; margin: 8px 0 4px; display: none;
+  animation: slideDown .2s ease;
+}
+.list-review-box.show { display: block; }
+
+/* ── 랭킹 페이지 ── */
+.rank-selector { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+.rank-select {
+  flex: 1; border: 1.5px solid #e0e0dc; border-radius: 10px;
+  padding: 9px 10px; font-size: 13px; color: #333;
+  font-family: inherit; background: #fff; outline: none; cursor: pointer;
+}
+.rank-select:focus { border-color: #185FA5; }
+.rank-list { list-style: none; }
+.rank-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 10px; border-bottom: 1px solid #f0f0ee; border-radius: 10px;
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-medal { font-size: 22px; min-width: 30px; text-align: center; }
+.rank-num { font-size: 15px; font-weight: 700; color: #ccc; min-width: 30px; text-align: center; }
+.rank-info { flex: 1; }
+.rank-name { font-size: 15px; font-weight: 600; color: #111; }
+.rank-meta { font-size: 12px; color: #aaa; margin-top: 2px; }
+.rank-score { text-align: right; }
+.rank-avg { font-size: 16px; font-weight: 800; color: #f5a623; }
+.rank-count { font-size: 11px; color: #bbb; margin-top: 2px; }
+.rank-empty { text-align: center; color: #bbb; font-size: 14px; padding: 3rem 0; line-height: 2; }
+
+/* ── 하단 탭바 ── */
+.tab-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 440px;
+  background: #fff; border-top: 1px solid #f0f0ee;
+  display: flex; z-index: 20;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 10px 0; cursor: pointer;
+  transition: color .12s; border: none; background: none; gap: 3px;
+}
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-label { font-size: 10px; font-weight: 500; color: #bbb; }
+.tab.active .tab-label { color: #185FA5; }
+.tab.active .tab-icon { filter: none; }
+
+/* ── 룰렛 ── */
+.roulette-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.roulette-strip-outer {
+  width: 100%; overflow: hidden; border-radius: 10px;
+  border: 2px solid #185FA5; background: #fff; position: relative; height: 56px;
+}
+.roulette-strip-outer::before, .roulette-strip-outer::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 50px; z-index: 2; pointer-events: none;
+}
+.roulette-strip-outer::before { left: 0; background: linear-gradient(to right, #fff 60%, transparent); }
+.roulette-strip-outer::after { right: 0; background: linear-gradient(to left, #fff 60%, transparent); }
+.roulette-center-mark {
+  position: absolute; left: 50%; top: 6px; bottom: 6px;
+  width: 2px; background: #185FA5; transform: translateX(-50%); z-index: 3; border-radius: 2px;
+}
+.roulette-strip { display: flex; align-items: center; height: 56px; white-space: nowrap; will-change: transform; }
+.roulette-item {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 110px; padding: 0 14px; height: 44px; margin: 6px 4px;
+  background: #f7f9fc; border: 1px solid #e4eaf2; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: #333; flex-shrink: 0;
+}
+.roulette-item.winner { background: #185FA5; color: #fff; border-color: #185FA5; }
+.roulette-label { font-size: 13px; color: #aaa; }
+
+/* ── 버전 바 ── */
+.version-bar { text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f5f5f3; }
+.version-btn {
+  font-size: 11px; color: #ccc; background: none; border: none;
+  cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color .12s;
+}
+.version-btn:hover { color: #888; }
+
+/* ── 모달 ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: none; align-items: flex-end; justify-content: center; z-index: 999;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff; border-radius: 20px 20px 0 0; padding: 1.5rem 1.5rem 2rem;
+  width: 100%; max-width: 440px; max-height: 80vh; overflow-y: auto;
+}
+.modal-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 1.25rem; }
+.modal-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 1.25rem; }
+.changelog { list-style: none; }
+.changelog > li { padding: 12px 0; border-bottom: 1px solid #f0f0ee; }
+.changelog > li:last-child { border-bottom: none; }
+.cl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.cl-version { font-size: 11px; font-weight: 700; color: #fff; background: #185FA5; padding: 3px 9px; border-radius: 20px; }
+.cl-title { font-size: 14px; font-weight: 600; color: #111; }
+.cl-items { list-style: none; padding-left: 2px; }
+.cl-items li { font-size: 13px; color: #666; line-height: 1.8; display: flex; gap: 6px; }
+.cl-items li::before { content: "·"; color: #185FA5; font-weight: 700; flex-shrink: 0; }
+
+.spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="app">
 
-  <!-- 메인 페이지 -->
-  <div class="page show" id="mainPage">
-    <h1>판교 점심 뽑기</h1>
-    <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
-    <p class="sync-bar" id="syncBar"></p>
-
-    <div class="best-card" id="bestCard">
-      <div class="best-title">🏆 이번 주 팀 베스트</div>
-      <div class="best-name" id="bestName">—</div>
-      <div class="best-stats" id="bestStats"></div>
+  <!-- 상단 헤더 -->
+  <div class="app-header">
+    <div>
+      <h1>판교 점심 뽑기 🎲</h1>
+      <div class="sub">판교로 331 기준 도보 5분 내</div>
     </div>
-
-    <div class="worst-card" id="worstCard">
-      <div class="worst-title">💀 이번 주 팀 꽝</div>
-      <div class="worst-name" id="worstName">—</div>
-      <div class="worst-stats" id="worstStats"></div>
-    </div>
-
-    <div class="result-card" id="card">
-      <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
-    </div>
-
-    <div class="review-box" id="reviewBox">
-      <p class="review-label" id="reviewLabel">별점 &amp; 코멘트 남기기</p>
-      <div class="nickname-wrap">
-        <span class="nickname-label">닉네임</span>
-        <input class="nickname-input" id="nicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
-      </div>
-      <div class="stars" id="stars">
-        <span class="star" data-star="1">★</span>
-        <span class="star" data-star="2">★</span>
-        <span class="star" data-star="3">★</span>
-        <span class="star" data-star="4">★</span>
-        <span class="star" data-star="5">★</span>
-      </div>
-      <textarea class="comment-input" id="commentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
-      <button class="btn-save" id="btnSaveMain">저장</button>
-    </div>
-
-    <div class="toggle-wrap">
-      <span class="toggle-label" id="toggleLabel">최근 2주 간 곳 포함</span>
-      <div class="toggle" id="filterToggle"></div>
-    </div>
-    <button class="btn-pick" id="btn">오늘 점심 뽑기</button>
-    <button class="btn-list" id="btnGoList">전체 맛집 목록 보기</button>
-    <button class="btn-list" id="btnGoRank">🏆 역대 월간 맛집 랭킹</button>
-
-    <div class="history" id="historyWrap" style="display:none;">
-      <p class="history-title">오늘 뽑은 기록 <span style="font-weight:400;color:#b0c4d8;font-size:11px;">· 눌러서 별점 남기기</span></p>
-      <ul class="history-list" id="historyList"></ul>
-    </div>
-
-    <div class="version-bar">
-      <button class="version-btn" id="btnVersion">v1.7 · 업데이트 내역</button>
-    </div>
+    <button class="btn-changelog" id="btnChangelog">v1.7</button>
   </div>
 
-  <!-- 전체목록 페이지 -->
-  <div class="page" id="listPage">
-    <div class="list-header">
-      <button class="btn-back" id="btnBack">←</button>
-      <span class="list-title">전체 맛집 목록</span>
-      <span class="list-count" id="listCount"></span>
-    </div>
-    <div class="filter-bar" id="filterBar"></div>
-    <ul class="all-list" id="allList"></ul>
-    <div class="list-review-box" id="listReviewBox">
-      <p class="review-label" id="listReviewLabel">별점 &amp; 코멘트</p>
-      <div class="nickname-wrap">
-        <span class="nickname-label">닉네임</span>
-        <input class="nickname-input" id="listNicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+  <div class="pages">
+
+    <!-- ① 메인 페이지 -->
+    <div class="page show" id="mainPage">
+      <p class="sync-bar" id="syncBar"></p>
+
+      <!-- 베스트/꽝 카드 -->
+      <div class="weekly-cards">
+        <div class="weekly-card best" id="bestCard">
+          <div class="weekly-card-title">🏆 이번 주 베스트</div>
+          <div class="weekly-card-name" id="bestName">—</div>
+          <div class="weekly-card-stats" id="bestStats"></div>
+        </div>
+        <div class="weekly-card worst" id="worstCard">
+          <div class="weekly-card-title">💀 이번 주 꽝</div>
+          <div class="weekly-card-name" id="worstName">—</div>
+          <div class="weekly-card-stats" id="worstStats"></div>
+        </div>
       </div>
-      <div class="stars" id="listStars">
-        <span class="star" data-star="1">★</span>
-        <span class="star" data-star="2">★</span>
-        <span class="star" data-star="3">★</span>
-        <span class="star" data-star="4">★</span>
-        <span class="star" data-star="5">★</span>
+
+      <!-- 결과 카드 -->
+      <div class="result-card" id="card">
+        <span class="placeholder">아래 버튼을 눌러<br>오늘 점심을 골라보세요 🍱</span>
       </div>
-      <textarea class="comment-input" id="listCommentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
-      <button class="btn-save" id="btnSaveList">저장</button>
+
+      <!-- 리뷰 박스 -->
+      <div class="review-box" id="reviewBox">
+        <p class="review-label" id="reviewLabel">별점 & 코멘트 남기기</p>
+        <div class="nickname-wrap">
+          <span class="nickname-label">닉네임</span>
+          <input class="nickname-input" id="nicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+        </div>
+        <div class="stars" id="stars">
+          <span class="star" data-star="1">★</span>
+          <span class="star" data-star="2">★</span>
+          <span class="star" data-star="3">★</span>
+          <span class="star" data-star="4">★</span>
+          <span class="star" data-star="5">★</span>
+        </div>
+        <textarea class="comment-input" id="commentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
+        <button class="btn-save" id="btnSaveMain">저장</button>
+      </div>
+
+      <!-- 2주 토글 -->
+      <div class="toggle-wrap" id="filterToggleWrap">
+        <span class="toggle-text" id="toggleLabel">최근 2주 간 곳 <b>포함</b></span>
+        <div class="toggle" id="filterToggle"></div>
+      </div>
+
+      <!-- 뽑기 버튼 -->
+      <div class="pick-section">
+        <button class="btn-pick" id="btn">오늘 점심 뽑기</button>
+      </div>
+
+      <!-- 히스토리 -->
+      <div class="history-section" id="historyWrap" style="display:none;">
+        <p class="section-title">오늘 뽑은 기록 · 눌러서 별점 남기기</p>
+        <div class="history-cards" id="historyList"></div>
+      </div>
+
+      <div class="version-bar">
+        <button class="version-btn" id="btnVersion">업데이트 내역</button>
+      </div>
     </div>
 
-    <div class="version-bar">
-      <button class="version-btn" id="btnVersionList">v1.7 · 업데이트 내역</button>
+    <!-- ② 전체목록 페이지 -->
+    <div class="page" id="listPage">
+      <div class="page-header">
+        <span class="page-title">전체 맛집 목록</span>
+        <span class="page-count" id="listCount"></span>
+      </div>
+      <div class="filter-bar" id="filterBar"></div>
+      <ul class="all-list" id="allList"></ul>
+      <div class="list-review-box" id="listReviewBox">
+        <p class="review-label" id="listReviewLabel">별점 & 코멘트</p>
+        <div class="nickname-wrap">
+          <span class="nickname-label">닉네임</span>
+          <input class="nickname-input" id="listNicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+        </div>
+        <div class="stars" id="listStars">
+          <span class="star" data-star="1">★</span>
+          <span class="star" data-star="2">★</span>
+          <span class="star" data-star="3">★</span>
+          <span class="star" data-star="4">★</span>
+          <span class="star" data-star="5">★</span>
+        </div>
+        <textarea class="comment-input" id="listCommentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
+        <button class="btn-save" id="btnSaveList">저장</button>
+      </div>
     </div>
+
+    <!-- ③ 랭킹 페이지 -->
+    <div class="page" id="rankPage">
+      <div class="page-header">
+        <span class="page-title">월간 맛집 랭킹 🏆</span>
+      </div>
+      <div class="rank-selector">
+        <select class="rank-select" id="rankYear"></select>
+        <select class="rank-select" id="rankMonth"></select>
+      </div>
+      <ul class="rank-list" id="rankList"></ul>
+    </div>
+
   </div>
 
-  <!-- 월간랭킹 페이지 -->
-  <div class="page" id="rankPage">
-    <div class="rank-header">
-      <button class="btn-back" id="btnBackRank">←</button>
-      <span class="rank-title">월간 맛집 랭킹</span>
-    </div>
-    <div class="rank-selector">
-      <select class="rank-select" id="rankYear"></select>
-      <select class="rank-select" id="rankMonth"></select>
-    </div>
-    <ul class="rank-list" id="rankList"></ul>
-    <div class="version-bar">
-      <button class="version-btn" id="btnVersionRank">v1.7 · 업데이트 내역</button>
-    </div>
+  <!-- 하단 탭바 -->
+  <div class="tab-bar">
+    <button class="tab active" data-page="mainPage">
+      <span class="tab-icon">🎲</span>
+      <span class="tab-label">뽑기</span>
+    </button>
+    <button class="tab" data-page="listPage">
+      <span class="tab-icon">🍽️</span>
+      <span class="tab-label">전체목록</span>
+    </button>
+    <button class="tab" data-page="rankPage">
+      <span class="tab-icon">🏆</span>
+      <span class="tab-label">랭킹</span>
+    </button>
   </div>
 
 </div>
 
-<!-- 업데이트 히스토리 모달 -->
+<!-- 업데이트 히스토리 모달 (바텀시트) -->
 <div class="modal-overlay" id="changelogModal">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">업데이트 내역</span>
-      <button class="modal-close" id="btnModalClose">✕</button>
-    </div>
+    <div class="modal-handle"></div>
+    <div class="modal-title">업데이트 내역</div>
     <ul class="changelog">
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.7</span>
-          <span class="cl-title">역대 월간 맛집 랭킹</span>
-        </div>
+        <div class="cl-header"><span class="cl-version">v1.7</span><span class="cl-title">UI 전면 개편</span></div>
         <ul class="cl-items">
-          <li>월별 별점 TOP 10 랭킹 확인 가능</li>
-          <li>연도·월 선택으로 과거 기록 조회</li>
-          <li>🥇🥈🥉 메달로 순위 표시</li>
+          <li>하단 탭바로 메뉴 전환</li>
+          <li>베스트/꽝 카드 가로 배치</li>
+          <li>히스토리 카드 디자인 개선</li>
+          <li>전체 레이아웃 앱 형태로 정리</li>
         </ul>
       </li>
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.6</span>
-          <span class="cl-title">닉네임 + 이번 주 꽝 맛집</span>
-        </div>
+        <div class="cl-header"><span class="cl-version">v1.6</span><span class="cl-title">닉네임 + 이번 주 꽝</span></div>
         <ul class="cl-items">
-          <li>별점 남길 때 닉네임 입력 — 누가 남긴 코멘트인지 표시</li>
-          <li>이번 주 별점 가장 낮은 식당 꽝 카드로 표시 😂</li>
+          <li>별점 남길 때 닉네임 입력</li>
+          <li>이번 주 별점 최하위 꽝 카드 표시 😂</li>
         </ul>
       </li>
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.5</span>
-          <span class="cl-title">룰렛 모드 + 이번 주 팀 베스트</span>
-        </div>
+        <div class="cl-header"><span class="cl-version">v1.5</span><span class="cl-title">룰렛 모드 + 팀 베스트</span></div>
         <ul class="cl-items">
-          <li>뽑기 버튼 누르면 룰렛이 돌아가며 당첨 식당 표시</li>
-          <li>이번 주 별점 가장 높은 식당 메인 화면 상단에 표시</li>
+          <li>뽑기 버튼 누르면 룰렛 애니메이션</li>
+          <li>이번 주 별점 1위 베스트 카드 표시</li>
         </ul>
       </li>
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.4</span>
-          <span class="cl-title">최근 2주 방문 제외 필터</span>
-        </div>
-        <ul class="cl-items">
-          <li>뽑기 전 토글로 최근 2주 간 곳 제외 가능</li>
-          <li>방문 기록은 기기에 자동 저장</li>
-        </ul>
+        <div class="cl-header"><span class="cl-version">v1.4</span><span class="cl-title">최근 2주 방문 제외</span></div>
+        <ul class="cl-items"><li>토글로 최근 2주 간 곳 제외 가능</li></ul>
       </li>
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.3</span>
-          <span class="cl-title">Firebase 공유 연동</span>
-        </div>
-        <ul class="cl-items">
-          <li>별점·코멘트 모든 기기에서 실시간 공유</li>
-          <li>팀원 별점 자동 누적 반영</li>
-        </ul>
+        <div class="cl-header"><span class="cl-version">v1.3</span><span class="cl-title">Firebase 공유 연동</span></div>
+        <ul class="cl-items"><li>별점·코멘트 모든 기기 실시간 공유</li></ul>
       </li>
       <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.2</span>
-          <span class="cl-title">전체 목록 보기</span>
-        </div>
+        <div class="cl-header"><span class="cl-version">v1.0~1.2</span><span class="cl-title">기본 기능</span></div>
         <ul class="cl-items">
-          <li>전체 44개 식당 한눈에 확인</li>
-          <li>장르별 필터 제공 (한식·일식·중식 등)</li>
-          <li>목록에서 바로 별점·코멘트 입력 가능</li>
-        </ul>
-      </li>
-      <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.1</span>
-          <span class="cl-title">별점 &amp; 코멘트</span>
-        </div>
-        <ul class="cl-items">
-          <li>뽑은 후 별점(1~5점) 및 한 줄 코멘트 입력</li>
-          <li>누적 평균 별점·방문 횟수 표시</li>
-          <li>오늘 기록 눌러서 별점 수정 가능</li>
-        </ul>
-      </li>
-      <li>
-        <div class="cl-header">
-          <span class="cl-version">v1.0</span>
-          <span class="cl-title">최초 출시</span>
-        </div>
-        <ul class="cl-items">
-          <li>판교로 331 도보 5분 내 맛집 랜덤 뽑기</li>
-          <li>오늘 뽑은 기록 표시</li>
+          <li>맛집 뽑기 · 별점·코멘트 · 전체목록</li>
         </ul>
       </li>
     </ul>
@@ -559,68 +556,41 @@ const restaurants = [
   {name:"시올돈",genre:"일식",loc:"유스페이스1 지하 B113호",desc:"돈까스 맛집"},
 ];
 
+// ── 상태 ──
 const today = new Date().toDateString();
 const DAY_KEY = 'pangyo_' + today;
 let history = [];
 try { history = JSON.parse(localStorage.getItem(DAY_KEY) || '[]'); } catch(e){}
 
 let reviews = {};
+let monthlyReviews = {};
 let currentName = null;
 let currentHistoryIdx = null;
 let selectedStar = 0;
 let listSelectedName = null;
 let listSelectedStar = 0;
 let activeFilter = '전체';
-
-// ── 2주 필터 토글 ──
 let filterRecent = false;
-const VISIT_KEY = 'pangyo_visits';
-let visitLog = {};
-try { visitLog = JSON.parse(localStorage.getItem(VISIT_KEY) || '{}'); } catch(e){}
 
-function saveVisit(name){
-  visitLog[name] = visitLog[name] || [];
-  visitLog[name].push(Date.now());
-  try { localStorage.setItem(VISIT_KEY, JSON.stringify(visitLog)); } catch(e){}
-}
-function getRecentVisited(){
-  const twoWeeks = 14 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  return Object.entries(reviews)
-    .filter(([_, rv]) => rv.lastVisit && (now - rv.lastVisit) < twoWeeks)
-    .map(([name]) => name);
-}
-
-document.getElementById('filterToggle').addEventListener('click', () => {
-  filterRecent = !filterRecent;
-  document.getElementById('filterToggle').classList.toggle('on', filterRecent);
-  const label = document.getElementById('toggleLabel');
-  label.textContent = filterRecent ? '최근 2주 간 곳 제외' : '최근 2주 간 곳 포함';
-  label.classList.toggle('on', filterRecent);
+// ── Firebase 리스닝 ──
+onSnapshot(collection(db, 'reviews'), (snapshot) => {
+  snapshot.forEach(d => { reviews[d.id] = d.data(); });
+  document.getElementById('syncBar').textContent = '';
+  renderBestWorst();
+  if(history.length) renderHistory();
+  if(document.getElementById('listPage').classList.contains('show')) renderListPage();
+  const nameEl = document.getElementById('card').querySelector('.result-name');
+  if(nameEl) updateCardStats(nameEl.textContent);
+}, () => {
+  document.getElementById('syncBar').textContent = '⚠ 오프라인 — 별점은 연결 후 저장됩니다';
 });
 
-// ── Firebase 실시간 리스닝 ──
-let monthlyReviews = {};
 onSnapshot(collection(db, 'monthly'), (snapshot) => {
   snapshot.forEach(d => { monthlyReviews[d.id] = d.data(); });
   if(document.getElementById('rankPage').classList.contains('show')) renderRankPage();
 });
 
-onSnapshot(collection(db, 'reviews'), (snapshot) => {
-  snapshot.forEach(d => { reviews[d.id] = d.data(); });
-  document.getElementById('syncBar').textContent = '';
-  updateCount();
-  if(history.length) renderHistory();
-  if(document.getElementById('listPage').classList.contains('show')) renderListPage();
-  renderBestCard();
-  const nameEl = document.getElementById('card').querySelector('.result-name');
-  if(nameEl) updateCardStats(nameEl.textContent);
-}, () => setSyncBar('err', '⚠ 오프라인 — 별점은 연결 후 저장됩니다'));
-
-function setSyncBar(type, msg){
-  const el = document.getElementById('syncBar');
-  el.textContent = msg; el.className = 'sync-bar ' + type;
-}
+// ── Firebase 저장 ──
 async function saveToFirestore(name, star, comment, nickname=''){
   const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastNickname:'', lastVisit:0};
   if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; rv.lastVisit = Date.now(); }
@@ -629,20 +599,72 @@ async function saveToFirestore(name, star, comment, nickname=''){
   reviews[name] = rv;
   try {
     await setDoc(doc(db, 'reviews', name), rv);
-    // 월별 랭킹 데이터 저장
     if(star > 0){
       const now = new Date();
       const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
       const monthDocId = `${monthKey}__${name}`;
-      const monthRef = doc(db, 'monthly', monthDocId);
-      const existing = monthlyReviews[monthDocId] || {name, month:monthKey, count:0, total:0, avg:0};
-      existing.count++; existing.total += star; existing.avg = existing.total / existing.count;
-      monthlyReviews[monthDocId] = existing;
-      await setDoc(monthRef, existing);
+      const mr = monthlyReviews[monthDocId] || {name, month:monthKey, count:0, total:0, avg:0};
+      mr.count++; mr.total += star; mr.avg = mr.total / mr.count;
+      monthlyReviews[monthDocId] = mr;
+      await setDoc(doc(db, 'monthly', monthDocId), mr);
     }
+  } catch(e){
+    document.getElementById('syncBar').textContent = '⚠ 저장 실패 — 네트워크를 확인해주세요';
   }
-  catch(e){ setSyncBar('err', '⚠ 저장 실패 — 네트워크를 확인해주세요'); }
 }
+
+// ── 탭바 ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const pageId = tab.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(pageId).classList.add('show');
+    tab.classList.add('active');
+    closeReview();
+    if(pageId === 'listPage') renderListPage();
+    if(pageId === 'rankPage'){ initRankSelectors(); renderRankPage(); }
+  });
+});
+
+// ── 모달 ──
+function toggleModal(){
+  document.getElementById('changelogModal').classList.toggle('show');
+}
+['btnChangelog','btnVersion'].forEach(id => {
+  document.getElementById(id).addEventListener('click', toggleModal);
+});
+document.getElementById('changelogModal').addEventListener('click', (e) => {
+  if(e.target === document.getElementById('changelogModal')) toggleModal();
+});
+
+// ── 베스트/꽝 ──
+function renderBestWorst(){
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay() + (d.getDay()===0?-6:1));
+  const weekStart = d.getTime();
+  const candidates = Object.entries(reviews)
+    .filter(([_, rv]) => rv.count > 0 && rv.lastVisit && rv.lastVisit >= weekStart)
+    .sort((a,b) => b[1].avg - a[1].avg);
+
+  const bestCard = document.getElementById('bestCard');
+  const worstCard = document.getElementById('worstCard');
+  if(!candidates.length){ bestCard.classList.remove('show'); worstCard.classList.remove('show'); return; }
+
+  const [bn, brv] = candidates[0];
+  document.getElementById('bestName').textContent = bn;
+  document.getElementById('bestStats').textContent = `★ ${brv.avg.toFixed(1)} · ${brv.count}회`;
+  bestCard.classList.add('show');
+
+  if(candidates.length >= 2){
+    const [wn, wrv] = candidates[candidates.length-1];
+    document.getElementById('worstName').textContent = wn;
+    document.getElementById('worstStats').textContent = `★ ${wrv.avg.toFixed(1)} · ${wrv.count}회`;
+    worstCard.classList.add('show');
+  } else { worstCard.classList.remove('show'); }
+}
+
+// ── 카드 통계 업데이트 ──
 function updateCardStats(name){
   const card = document.getElementById('card');
   const nameEl = card.querySelector('.result-name');
@@ -651,196 +673,68 @@ function updateCardStats(name){
   const existing = card.querySelector('.result-stats');
   const commentEl = card.querySelector('.result-last-comment');
   if(!rv || rv.count === 0){ if(existing) existing.remove(); if(commentEl) commentEl.remove(); return; }
-  const commentLine = rv.lastComment ? `<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>` : '';
-  const html = `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${commentLine}`;
+  const commentLine = rv.lastComment
+    ? `<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>` : '';
+  const html = `<div class="result-stats"><b>★ ${rv.avg.toFixed(1)}</b><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${commentLine}`;
   if(existing){ if(commentEl) commentEl.remove(); existing.outerHTML = html; }
   else { card.insertAdjacentHTML('beforeend', html); }
 }
 
-// ── 모달 ──
-function toggleModal(){
-  document.getElementById('changelogModal').classList.toggle('show');
+// ── 2주 필터 토글 ──
+function getRecentVisited(){
+  const twoWeeks = 14*24*60*60*1000, now = Date.now();
+  return Object.entries(reviews)
+    .filter(([_, rv]) => rv.lastVisit && (now - rv.lastVisit) < twoWeeks)
+    .map(([name]) => name);
 }
-document.getElementById('btnVersion').addEventListener('click', toggleModal);
-document.getElementById('btnVersionRank').addEventListener('click', toggleModal);
-document.getElementById('btnVersionList').addEventListener('click', toggleModal);
-document.getElementById('btnModalClose').addEventListener('click', toggleModal);
-document.getElementById('changelogModal').addEventListener('click', (e) => {
-  if(e.target === document.getElementById('changelogModal')) toggleModal();
+document.getElementById('filterToggleWrap').addEventListener('click', () => {
+  filterRecent = !filterRecent;
+  document.getElementById('filterToggle').classList.toggle('on', filterRecent);
+  document.getElementById('toggleLabel').innerHTML = filterRecent
+    ? '최근 2주 간 곳 <b>제외</b>'
+    : '최근 2주 간 곳 <b>포함</b>';
 });
 
-// ── 페이지 전환 ──
-document.getElementById('btnGoRank').addEventListener('click', () => {
-  document.getElementById('mainPage').classList.remove('show');
-  document.getElementById('rankPage').classList.add('show');
-  initRankSelectors();
-  renderRankPage();
-});
-document.getElementById('btnBackRank').addEventListener('click', () => {
-  document.getElementById('rankPage').classList.remove('show');
-  document.getElementById('mainPage').classList.add('show');
-});
-
-document.getElementById('btnGoList').addEventListener('click', () => {
-  document.getElementById('mainPage').classList.remove('show');
-  document.getElementById('listPage').classList.add('show');
-  renderListPage();
-});
-document.getElementById('btnBack').addEventListener('click', () => {
-  document.getElementById('listPage').classList.remove('show');
-  document.getElementById('mainPage').classList.add('show');
-  listSelectedName = null;
-  document.getElementById('listReviewBox').classList.remove('show');
-});
-
-// ── 전체목록 ──
-function renderListPage(){
-  const genres = ['전체', ...new Set(restaurants.map(r => r.genre))];
-  document.getElementById('filterBar').innerHTML = genres.map(g =>
-    `<button class="filter-btn ${g===activeFilter?'on':''}" data-genre="${g}">${g}</button>`
-  ).join('');
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeFilter = btn.dataset.genre;
-      listSelectedName = null;
-      document.getElementById('listReviewBox').classList.remove('show');
-      renderListPage();
-    });
-  });
-  const filtered = activeFilter==='전체' ? restaurants : restaurants.filter(r=>r.genre===activeFilter);
-  document.getElementById('listCount').textContent = `${filtered.length}곳`;
-  document.getElementById('allList').innerHTML = filtered.map(r => {
-    const rv = reviews[r.name];
-    const stats = rv && rv.count > 0
-      ? `<div class="all-avg">★ ${rv.avg.toFixed(1)}</div><div class="all-visits">${rv.count}회 방문</div>`
-      : `<div class="no-review">미방문</div>`;
-    return `<li data-name="${r.name}" class="${listSelectedName===r.name?'active':''}">
-      <div class="all-row">
-        <div><div class="all-name">${r.name}</div><div class="all-meta">${r.genre} · ${r.loc}</div></div>
-        <div class="all-stats">${stats}</div>
-      </div>
-    </li>`;
-  }).join('');
-  document.querySelectorAll('.all-list li').forEach(li => {
-    li.addEventListener('click', () => toggleListReview(li.dataset.name));
-  });
-}
-function toggleListReview(name){
-  const box = document.getElementById('listReviewBox');
-  if(listSelectedName===name && box.classList.contains('show')){
-    listSelectedName=null; listSelectedStar=0; box.classList.remove('show'); renderListPage(); return;
-  }
-  listSelectedName=name; listSelectedStar=0;
-  document.getElementById('listReviewLabel').textContent = `"${name}" 별점 & 코멘트`;
-  document.getElementById('listCommentInput').value='';
-  renderListStars(0); box.classList.add('show');
-  box.scrollIntoView({behavior:'smooth',block:'nearest'});
-  renderListPage();
-}
-document.querySelectorAll('#listStars .star').forEach(s => {
-  s.addEventListener('click', () => { listSelectedStar=+s.dataset.star; renderListStars(listSelectedStar); });
-});
-function renderListStars(n){
-  document.querySelectorAll('#listStars .star').forEach((el,i) => el.classList.toggle('on', i<n));
-}
-document.getElementById('btnSaveList').addEventListener('click', async () => {
-  if(!listSelectedName) return;
-  const comment = document.getElementById('listCommentInput').value.trim();
-  const nickname = document.getElementById('listNicknameInput').value.trim();
-  if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName, listSelectedStar, comment, nickname);
-  listSelectedName=null; listSelectedStar=0;
-  document.getElementById('listReviewBox').classList.remove('show');
-  renderListPage();
-});
-
-// ── 팀 베스트 ──
-function renderBestCard(){
-  const now = Date.now();
-  const weekMs = 7 * 24 * 60 * 60 * 1000;
-  // 이번 주 월요일 자정 기준
-  const d = new Date(); d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - d.getDay() + (d.getDay()===0?-6:1));
-  const weekStart = d.getTime();
-
-  // Firestore lastVisit 기준으로 이번 주 방문한 곳 중 최고 평점
-  const candidates = Object.entries(reviews)
-    .filter(([_, rv]) => rv.count > 0 && rv.lastVisit && rv.lastVisit >= weekStart)
-    .sort((a, b) => b[1].avg - a[1].avg);
-
-  const bestCard = document.getElementById('bestCard');
-  const worstCard = document.getElementById('worstCard');
-  if(candidates.length === 0){
-    bestCard.classList.remove('show');
-    worstCard.classList.remove('show');
-    return;
-  }
-  const [bestName, bestRv] = candidates[0];
-  document.getElementById('bestName').textContent = bestName;
-  document.getElementById('bestStats').textContent = `★ ${bestRv.avg.toFixed(1)} · ${bestRv.count}회 방문`;
-  bestCard.classList.add('show');
-
-  // 꽝: 2개 이상일 때만 표시
-  if(candidates.length >= 2){
-    const [worstName, worstRv] = candidates[candidates.length - 1];
-    document.getElementById('worstName').textContent = worstName;
-    document.getElementById('worstStats').textContent = `★ ${worstRv.avg.toFixed(1)} · ${worstRv.count}회 방문`;
-    worstCard.classList.add('show');
-  } else {
-    worstCard.classList.remove('show');
-  }
-}
-
-// ── 룰렛 애니메이션 ──
+// ── 룰렛 ──
 function runRoulette(pool, winner, callback){
   const card = document.getElementById('card');
-  // 룰렛 아이템 생성 (winner 포함 랜덤 섞기, 총 30개)
+  card.classList.remove('picked');
   const items = [];
   for(let i=0; i<28; i++) items.push(pool[Math.floor(Math.random()*pool.length)]);
-  items.push(winner);
-  items.push(winner); // 마지막 두 개를 winner로
+  items.push(winner); items.push(winner);
 
-  card.innerHTML = `
-    <div class="roulette-wrap">
-      <div class="roulette-strip-outer">
-        <div class="roulette-center-mark"></div>
-        <div class="roulette-strip" id="rouletteStrip">
-          ${items.map((r,i) => `<div class="roulette-item" data-idx="${i}">${r.name}</div>`).join('')}
-        </div>
+  card.innerHTML = `<div class="roulette-wrap">
+    <div class="roulette-strip-outer">
+      <div class="roulette-center-mark"></div>
+      <div class="roulette-strip" id="rouletteStrip">
+        ${items.map(r=>`<div class="roulette-item">${r.name}</div>`).join('')}
       </div>
-      <div class="roulette-label">두근두근...</div>
-    </div>`;
+    </div>
+    <div class="roulette-label">두근두근...</div>
+  </div>`;
 
-  // 레이아웃 계산 후 애니메이션 시작
   requestAnimationFrame(() => {
     const strip = document.getElementById('rouletteStrip');
     if(!strip) return;
     const itemEls = strip.querySelectorAll('.roulette-item');
-    const itemW = 144;
+    const itemW = 118;
     const cardW = card.offsetWidth || 360;
-    const centerOffset = cardW / 2 - itemW / 2;
+    const centerOffset = cardW/2 - itemW/2;
     const targetIdx = items.length - 1;
     const targetX = -(targetIdx * itemW - centerOffset);
-
     let start = null;
     const duration = 2400;
-
-    function easeOut(t){ return 1 - Math.pow(1 - t, 4); }
-
+    function easeOut(t){ return 1 - Math.pow(1-t, 4); }
     function animate(ts){
       if(!start) start = ts;
-      const elapsed = ts - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = easeOut(progress);
-      const totalTravel = Math.abs(targetX) + centerOffset;
-      const x = -totalTravel * eased + centerOffset;
-      strip.style.transform = `translateX(${x}px)`;
-      if(progress < 1){
-        requestAnimationFrame(animate);
-      } else {
+      const p = Math.min((ts-start)/duration, 1);
+      strip.style.transform = `translateX(${-(Math.abs(targetX)+centerOffset)*easeOut(p)+centerOffset}px)`;
+      if(p < 1){ requestAnimationFrame(animate); }
+      else {
         strip.style.transform = `translateX(${targetX}px)`;
         itemEls[targetIdx].classList.add('winner');
-        const label = card.querySelector('.roulette-label');
-        if(label) label.textContent = '🎉';
+        const lbl = card.querySelector('.roulette-label');
+        if(lbl) lbl.textContent = '🎉';
         setTimeout(callback, 700);
       }
     }
@@ -848,33 +742,37 @@ function runRoulette(pool, winner, callback){
   });
 }
 
-// ── 메인: 뽑기 ──
+// ── 뽑기 ──
 document.getElementById('btn').addEventListener('click', () => {
   const btn = document.getElementById('btn');
-  btn.disabled=true; closeReview();
-
+  btn.disabled = true; closeReview();
   const used = history.map(h=>h.name);
   const recentVisited = filterRecent ? getRecentVisited() : [];
   let pool = restaurants.filter(r=>!used.includes(r.name) && !recentVisited.includes(r.name));
-  if(pool.length === 0) pool = restaurants.filter(r=>!used.includes(r.name));
-  if(pool.length === 0) pool = restaurants;
+  if(!pool.length) pool = restaurants.filter(r=>!used.includes(r.name));
+  if(!pool.length) pool = restaurants;
   const r = pool[Math.floor(Math.random()*pool.length)];
 
   runRoulette(pool.length >= 5 ? pool : restaurants, r, () => {
     currentName=r.name; currentHistoryIdx=0; selectedStar=0;
-    const rv=reviews[r.name];
-    const stats = rv&&rv.count>0
-      ? `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>`:''}`
-      : '';
-    document.getElementById('card').innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
-    const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    history.unshift({name:r.name,time:t,star:0,comment:''});
-    try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
-    updateCount(); renderHistory(); openReview(r.name,0); btn.disabled=false;
+    const rv = reviews[r.name];
+    const commentLine = rv&&rv.lastComment ? `<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>` : '';
+    const stats = rv&&rv.count>0 ? `<div class="result-stats"><b>★ ${rv.avg.toFixed(1)}</b><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${commentLine}` : '';
+    const card = document.getElementById('card');
+    card.classList.add('picked');
+    card.innerHTML = `<div class="result-name">${r.name}</div>
+      <div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div>
+      <div class="result-desc">${r.desc}</div>${stats}`;
+    const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    history.unshift({name:r.name, time:t, star:0, comment:''});
+    try{ localStorage.setItem(DAY_KEY, JSON.stringify(history)); }catch(e){}
+    renderHistory();
+    openReview(r.name, 0);
+    btn.disabled = false;
   });
 });
 
-// ── 메인: 별점 ──
+// ── 별점 (메인) ──
 document.querySelectorAll('#stars .star').forEach(s => {
   s.addEventListener('click', () => { selectedStar=+s.dataset.star; renderStars(selectedStar); });
 });
@@ -885,6 +783,7 @@ function openReview(name, histIdx){
   const h=history[histIdx]||{};
   selectedStar=h.star||0;
   document.getElementById('commentInput').value=h.comment||'';
+  document.getElementById('nicknameInput').value='';
   document.getElementById('reviewLabel').textContent=`"${name}" 별점 & 코멘트`;
   renderStars(selectedStar);
   document.getElementById('reviewBox').classList.add('show');
@@ -898,9 +797,9 @@ function closeReview(){
 
 document.getElementById('btnSaveMain').addEventListener('click', async () => {
   if(!currentName) return;
-  const comment=document.getElementById('commentInput').value.trim();
-  const star=selectedStar;
+  const comment = document.getElementById('commentInput').value.trim();
   const nickname = document.getElementById('nicknameInput').value.trim();
+  const star = selectedStar;
   if(star>0||comment||nickname){
     const prevStar=(history[currentHistoryIdx]||{}).star||0;
     const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:'',lastNickname:''};
@@ -910,77 +809,137 @@ document.getElementById('btnSaveMain').addEventListener('click', async () => {
   if(history[currentHistoryIdx]){
     if(star>0) history[currentHistoryIdx].star=star;
     if(comment) history[currentHistoryIdx].comment=comment;
-    try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
+    try{ localStorage.setItem(DAY_KEY, JSON.stringify(history)); }catch(e){}
   }
   closeReview();
 });
 
 // ── 히스토리 클릭 ──
 document.getElementById('historyList').addEventListener('click', (e) => {
-  const li = e.target.closest('li');
-  if(!li) return;
-  const idx = +li.dataset.idx;
+  const card = e.target.closest('.history-card');
+  if(!card) return;
+  const idx = +card.dataset.idx;
   if(currentHistoryIdx===idx && document.getElementById('reviewBox').classList.contains('show')){ closeReview(); return; }
   const h=history[idx]; if(!h) return;
   openReview(h.name, idx);
   document.getElementById('reviewBox').scrollIntoView({behavior:'smooth',block:'nearest'});
 });
 
-function updateCount(){}
+function renderHistory(){
+  const wrap=document.getElementById('historyWrap'), list=document.getElementById('historyList');
+  if(!history.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML=history.slice(0,5).map((h,i)=>{
+    const starStr=h.star?'★'.repeat(h.star)+'☆'.repeat(5-h.star):'';
+    const commentStr=h.comment?`<div class="hc-comment">"${h.comment}"</div>`:'';
+    const isActive=currentHistoryIdx===i&&document.getElementById('reviewBox').classList.contains('show');
+    return `<div class="history-card ${isActive?'active':''}" data-idx="${i}">
+      <div class="hc-row">
+        <span class="hc-name">${h.name}</span>
+        <div class="hc-right">
+          ${starStr?`<span class="hc-stars">${starStr}</span>`:`<span class="hc-hint">+ 별점</span>`}
+          <span class="hc-time">${h.time}</span>
+        </div>
+      </div>${commentStr}
+    </div>`;
+  }).join('');
+}
 
-// ── 월간 랭킹 ──
+// ── 전체목록 ──
+function renderListPage(){
+  const genres = ['전체', ...new Set(restaurants.map(r=>r.genre))];
+  document.getElementById('filterBar').innerHTML = genres.map(g=>
+    `<button class="filter-btn ${g===activeFilter?'on':''}" data-genre="${g}">${g}</button>`
+  ).join('');
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeFilter=btn.dataset.genre;
+      listSelectedName=null;
+      document.getElementById('listReviewBox').classList.remove('show');
+      renderListPage();
+    });
+  });
+  const filtered = activeFilter==='전체' ? restaurants : restaurants.filter(r=>r.genre===activeFilter);
+  document.getElementById('listCount').textContent = `${filtered.length}곳`;
+  document.getElementById('allList').innerHTML = filtered.map(r=>{
+    const rv=reviews[r.name];
+    const stats = rv&&rv.count>0
+      ? `<div class="all-avg">★ ${rv.avg.toFixed(1)}</div><div class="all-visits">${rv.count}회</div>`
+      : `<div class="no-review">미방문</div>`;
+    return `<li class="all-item ${listSelectedName===r.name?'active':''}" data-name="${r.name}">
+      <div class="all-info"><div class="all-name">${r.name}</div><div class="all-meta">${r.genre} · ${r.loc}</div></div>
+      <div class="all-stats">${stats}</div>
+    </li>`;
+  }).join('');
+  document.querySelectorAll('.all-item').forEach(li=>{
+    li.addEventListener('click', ()=>toggleListReview(li.dataset.name));
+  });
+}
+
+function toggleListReview(name){
+  const box=document.getElementById('listReviewBox');
+  if(listSelectedName===name&&box.classList.contains('show')){
+    listSelectedName=null; listSelectedStar=0; box.classList.remove('show'); renderListPage(); return;
+  }
+  listSelectedName=name; listSelectedStar=0;
+  document.getElementById('listReviewLabel').textContent=`"${name}" 별점 & 코멘트`;
+  document.getElementById('listCommentInput').value='';
+  document.getElementById('listNicknameInput').value='';
+  renderListStars(0); box.classList.add('show');
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderListPage();
+}
+document.querySelectorAll('#listStars .star').forEach(s=>{
+  s.addEventListener('click',()=>{ listSelectedStar=+s.dataset.star; renderListStars(listSelectedStar); });
+});
+function renderListStars(n){ document.querySelectorAll('#listStars .star').forEach((el,i)=>el.classList.toggle('on',i<n)); }
+document.getElementById('btnSaveList').addEventListener('click', async ()=>{
+  if(!listSelectedName) return;
+  const comment=document.getElementById('listCommentInput').value.trim();
+  const nickname=document.getElementById('listNicknameInput').value.trim();
+  if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName,listSelectedStar,comment,nickname);
+  listSelectedName=null; listSelectedStar=0;
+  document.getElementById('listReviewBox').classList.remove('show');
+  renderListPage();
+});
+
+// ── 랭킹 ──
 function initRankSelectors(){
-  const now = new Date();
-  const yearSel = document.getElementById('rankYear');
-  const monthSel = document.getElementById('rankMonth');
-
-  // 연도: 현재 연도부터 2024까지
-  const startYear = 2024;
-  const curYear = now.getFullYear();
-  yearSel.innerHTML = '';
-  for(let y = curYear; y >= startYear; y--){
-    const opt = document.createElement('option');
-    opt.value = y; opt.textContent = `${y}년`;
-    if(y === curYear) opt.selected = true;
-    yearSel.appendChild(opt);
+  const now=new Date();
+  const ySel=document.getElementById('rankYear'), mSel=document.getElementById('rankMonth');
+  if(ySel.options.length) return; // 이미 초기화됨
+  for(let y=now.getFullYear(); y>=2024; y--){
+    const o=document.createElement('option');
+    o.value=y; o.textContent=`${y}년`; if(y===now.getFullYear()) o.selected=true;
+    ySel.appendChild(o);
   }
-
-  // 월
-  monthSel.innerHTML = '';
-  for(let m = 1; m <= 12; m++){
-    const opt = document.createElement('option');
-    opt.value = String(m).padStart(2,'0');
-    opt.textContent = `${m}월`;
-    if(m === now.getMonth()+1) opt.selected = true;
-    monthSel.appendChild(opt);
+  for(let m=1; m<=12; m++){
+    const o=document.createElement('option');
+    o.value=String(m).padStart(2,'0'); o.textContent=`${m}월`;
+    if(m===now.getMonth()+1) o.selected=true;
+    mSel.appendChild(o);
   }
-
-  yearSel.addEventListener('change', renderRankPage);
-  monthSel.addEventListener('change', renderRankPage);
+  ySel.addEventListener('change', renderRankPage);
+  mSel.addEventListener('change', renderRankPage);
 }
 
 function renderRankPage(){
-  const year = document.getElementById('rankYear').value;
-  const month = document.getElementById('rankMonth').value;
-  const monthKey = `${year}-${month}`;
-
-  const entries = Object.values(monthlyReviews)
-    .filter(r => r.month === monthKey && r.count > 0)
-    .sort((a,b) => b.avg - a.avg || b.count - a.count)
-    .slice(0, 10);
-
-  const list = document.getElementById('rankList');
-  if(entries.length === 0){
-    list.innerHTML = `<div class="rank-empty">이 달의 기록이 없어요 🍽️</div>`;
+  const year=document.getElementById('rankYear').value;
+  const month=document.getElementById('rankMonth').value;
+  const monthKey=`${year}-${month}`;
+  const entries=Object.values(monthlyReviews)
+    .filter(r=>r.month===monthKey&&r.count>0)
+    .sort((a,b)=>b.avg-a.avg||b.count-a.count)
+    .slice(0,10);
+  const list=document.getElementById('rankList');
+  if(!entries.length){
+    list.innerHTML=`<div class="rank-empty">이 달의 기록이 없어요 🍽️<br><span style="font-size:12px">별점을 남기면 여기에 쌓여요</span></div>`;
     return;
   }
-
-  const medals = ['🥇','🥈','🥉'];
-  const numClass = ['gold','silver','bronze'];
-  list.innerHTML = entries.map((r, i) => {
-    const num = i < 3 ? `<span style="font-size:22px">${medals[i]}</span>` : `<span class="rank-num normal">${i+1}</span>`;
-    return `<li class="rank-item">
-      <div style="min-width:32px;text-align:center">${num}</div>
+  const medals=['🥇','🥈','🥉'];
+  list.innerHTML=entries.map((r,i)=>`
+    <li class="rank-item">
+      <div class="${i<3?'rank-medal':'rank-num'}">${i<3?medals[i]:i+1}</div>
       <div class="rank-info">
         <div class="rank-name">${r.name}</div>
         <div class="rank-meta">${r.count}회 별점 등록</div>
@@ -988,29 +947,9 @@ function renderRankPage(){
       <div class="rank-score">
         <div class="rank-avg">★ ${r.avg.toFixed(1)}</div>
       </div>
-    </li>`;
-  }).join('');
-}
-function renderHistory(){
-  const wrap=document.getElementById('historyWrap'), list=document.getElementById('historyList');
-  if(!history.length){ wrap.style.display='none'; return; }
-  wrap.style.display='block';
-  list.innerHTML=history.slice(0,5).map((h,i)=>{
-    const starStr=h.star?'★'.repeat(h.star)+'☆'.repeat(5-h.star):'';
-    const commentStr=h.comment?`<div class="history-comment">"${h.comment}"</div>`:'';
-    const isActive=currentHistoryIdx===i&&document.getElementById('reviewBox').classList.contains('show');
-    return `<li data-idx="${i}" class="${isActive?'active':''}">
-      <div class="history-row">
-        <span class="history-name">${h.name}</span>
-        <div class="history-right">
-          ${starStr?`<span class="history-stars">${starStr}</span>`:`<span class="edit-hint">+ 별점</span>`}
-          <span class="history-time">${h.time}</span>
-        </div>
-      </div>${commentStr}</li>`;
-  }).join('');
+    </li>`).join('');
 }
 
-updateCount();
 if(history.length) renderHistory();
 
 </script>
