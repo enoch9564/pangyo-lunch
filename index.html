@@ -160,6 +160,27 @@
   .cl-items li { font-size: 13px; color: #666; line-height: 1.8; display: flex; gap: 6px; }
   .cl-items li::before { content: "·"; color: #185FA5; font-weight: 700; flex-shrink: 0; }
 
+  /* 토글 스위치 */
+  .toggle-wrap {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 1rem;
+  }
+  .toggle-label { font-size: 13px; color: #666; }
+  .toggle-label.on { color: #185FA5; font-weight: 500; }
+  .toggle {
+    position: relative; width: 40px; height: 22px;
+    background: #e0e0dc; border-radius: 11px; cursor: pointer;
+    transition: background .2s; flex-shrink: 0;
+  }
+  .toggle.on { background: #185FA5; }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -191,6 +212,10 @@
     </div>
 
     <p class="count" id="count"></p>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="toggleLabel">최근 2주 간 곳 포함</span>
+      <div class="toggle" id="filterToggle"></div>
+    </div>
     <button class="btn-pick" id="btn">오늘 점심 뽑기</button>
     <button class="btn-list" id="btnGoList">전체 맛집 목록 보기</button>
 
@@ -200,7 +225,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersion">v1.3 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersion">v1.4 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -227,7 +252,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersionList">v1.3 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersionList">v1.4 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -241,6 +266,16 @@
       <button class="modal-close" id="btnModalClose">✕</button>
     </div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.4</span>
+          <span class="cl-title">최근 2주 방문 제외 필터</span>
+        </div>
+        <ul class="cl-items">
+          <li>뽑기 전 토글로 최근 2주 간 곳 제외 가능</li>
+          <li>방문 기록은 기기에 자동 저장</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header">
           <span class="cl-version">v1.3</span>
@@ -362,6 +397,33 @@ let selectedStar = 0;
 let listSelectedName = null;
 let listSelectedStar = 0;
 let activeFilter = '전체';
+
+// ── 2주 필터 토글 ──
+let filterRecent = false;
+const VISIT_KEY = 'pangyo_visits';
+let visitLog = {};
+try { visitLog = JSON.parse(localStorage.getItem(VISIT_KEY) || '{}'); } catch(e){}
+
+function saveVisit(name){
+  visitLog[name] = visitLog[name] || [];
+  visitLog[name].push(Date.now());
+  try { localStorage.setItem(VISIT_KEY, JSON.stringify(visitLog)); } catch(e){}
+}
+function getRecentVisited(){
+  const twoWeeks = 14 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  return Object.entries(visitLog)
+    .filter(([_, dates]) => dates.some(d => now - d < twoWeeks))
+    .map(([name]) => name);
+}
+
+document.getElementById('filterToggle').addEventListener('click', () => {
+  filterRecent = !filterRecent;
+  document.getElementById('filterToggle').classList.toggle('on', filterRecent);
+  const label = document.getElementById('toggleLabel');
+  label.textContent = filterRecent ? '최근 2주 간 곳 제외' : '최근 2주 간 곳 포함';
+  label.classList.toggle('on', filterRecent);
+});
 
 // ── Firebase 실시간 리스닝 ──
 onSnapshot(collection(db, 'reviews'), (snapshot) => {
@@ -490,8 +552,11 @@ document.getElementById('btn').addEventListener('click', () => {
   card.innerHTML='<span class="spin">&#8635;</span>';
   setTimeout(()=>{
     const used = history.map(h=>h.name);
-    const pool = restaurants.filter(r=>!used.includes(r.name));
-    const r = (pool.length>0?pool:restaurants)[Math.floor(Math.random()*(pool.length>0?pool.length:restaurants.length))];
+    const recentVisited = filterRecent ? getRecentVisited() : [];
+    let pool = restaurants.filter(r=>!used.includes(r.name) && !recentVisited.includes(r.name));
+    if(pool.length === 0) pool = restaurants.filter(r=>!used.includes(r.name));
+    if(pool.length === 0) pool = restaurants;
+    const r = pool[Math.floor(Math.random()*pool.length)];
     currentName=r.name; currentHistoryIdx=0; selectedStar=0;
     const rv=reviews[r.name];
     const stats = rv&&rv.count>0
@@ -499,6 +564,7 @@ document.getElementById('btn').addEventListener('click', () => {
       : '';
     card.innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
     const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    saveVisit(r.name);
     history.unshift({name:r.name,time:t,star:0,comment:''});
     try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
     updateCount(); renderHistory(); openReview(r.name,0); btn.disabled=false;
