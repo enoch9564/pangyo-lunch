@@ -253,6 +253,41 @@
   .nickname-input:focus { border-color: #185FA5; }
   .nickname-label { font-size: 12px; color: #aaa; white-space: nowrap; }
 
+  /* 월간 랭킹 */
+  .rank-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+  .rank-title { font-size: 18px; font-weight: 600; color: #111; }
+  .rank-selector {
+    display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;
+  }
+  .rank-select {
+    flex: 1; border: 1px solid #e0e0dc; border-radius: 8px;
+    padding: 8px 10px; font-size: 13px; color: #333;
+    font-family: inherit; background: #fff; outline: none; cursor: pointer;
+  }
+  .rank-select:focus { border-color: #185FA5; }
+  .rank-list { list-style: none; }
+  .rank-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 10px; border-bottom: 1px solid #f0f0ee;
+    border-radius: 10px; transition: background .12s;
+  }
+  .rank-item:hover { background: #f7f7f5; }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-num {
+    font-size: 18px; font-weight: 700; min-width: 28px; text-align: center;
+  }
+  .rank-num.gold { color: #f5a623; }
+  .rank-num.silver { color: #aaa; }
+  .rank-num.bronze { color: #cd7f32; }
+  .rank-num.normal { color: #ccc; }
+  .rank-info { flex: 1; }
+  .rank-name { font-size: 15px; font-weight: 500; color: #111; margin-bottom: 2px; }
+  .rank-meta { font-size: 12px; color: #aaa; }
+  .rank-score { text-align: right; }
+  .rank-avg { font-size: 16px; font-weight: 700; color: #f5a623; }
+  .rank-count { font-size: 11px; color: #bbb; margin-top: 2px; }
+  .rank-empty { text-align: center; color: #bbb; font-size: 14px; padding: 2rem 0; }
+
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -305,6 +340,7 @@
     </div>
     <button class="btn-pick" id="btn">오늘 점심 뽑기</button>
     <button class="btn-list" id="btnGoList">전체 맛집 목록 보기</button>
+    <button class="btn-list" id="btnGoRank">🏆 역대 월간 맛집 랭킹</button>
 
     <div class="history" id="historyWrap" style="display:none;">
       <p class="history-title">오늘 뽑은 기록 <span style="font-weight:400;color:#b0c4d8;font-size:11px;">· 눌러서 별점 남기기</span></p>
@@ -312,7 +348,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersion">v1.6 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersion">v1.7 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -343,7 +379,23 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersionList">v1.6 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersionList">v1.7 · 업데이트 내역</button>
+    </div>
+  </div>
+
+  <!-- 월간랭킹 페이지 -->
+  <div class="page" id="rankPage">
+    <div class="rank-header">
+      <button class="btn-back" id="btnBackRank">←</button>
+      <span class="rank-title">월간 맛집 랭킹</span>
+    </div>
+    <div class="rank-selector">
+      <select class="rank-select" id="rankYear"></select>
+      <select class="rank-select" id="rankMonth"></select>
+    </div>
+    <ul class="rank-list" id="rankList"></ul>
+    <div class="version-bar">
+      <button class="version-btn" id="btnVersionRank">v1.7 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -357,6 +409,17 @@
       <button class="modal-close" id="btnModalClose">✕</button>
     </div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.7</span>
+          <span class="cl-title">역대 월간 맛집 랭킹</span>
+        </div>
+        <ul class="cl-items">
+          <li>월별 별점 TOP 10 랭킹 확인 가능</li>
+          <li>연도·월 선택으로 과거 기록 조회</li>
+          <li>🥇🥈🥉 메달로 순위 표시</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header">
           <span class="cl-version">v1.6</span>
@@ -537,6 +600,12 @@ document.getElementById('filterToggle').addEventListener('click', () => {
 });
 
 // ── Firebase 실시간 리스닝 ──
+let monthlyReviews = {};
+onSnapshot(collection(db, 'monthly'), (snapshot) => {
+  snapshot.forEach(d => { monthlyReviews[d.id] = d.data(); });
+  if(document.getElementById('rankPage').classList.contains('show')) renderRankPage();
+});
+
 onSnapshot(collection(db, 'reviews'), (snapshot) => {
   snapshot.forEach(d => { reviews[d.id] = d.data(); });
   document.getElementById('syncBar').textContent = '';
@@ -558,7 +627,20 @@ async function saveToFirestore(name, star, comment, nickname=''){
   if(comment) rv.lastComment = comment;
   if(nickname) rv.lastNickname = nickname;
   reviews[name] = rv;
-  try { await setDoc(doc(db, 'reviews', name), rv); }
+  try {
+    await setDoc(doc(db, 'reviews', name), rv);
+    // 월별 랭킹 데이터 저장
+    if(star > 0){
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const monthDocId = `${monthKey}__${name}`;
+      const monthRef = doc(db, 'monthly', monthDocId);
+      const existing = monthlyReviews[monthDocId] || {name, month:monthKey, count:0, total:0, avg:0};
+      existing.count++; existing.total += star; existing.avg = existing.total / existing.count;
+      monthlyReviews[monthDocId] = existing;
+      await setDoc(monthRef, existing);
+    }
+  }
   catch(e){ setSyncBar('err', '⚠ 저장 실패 — 네트워크를 확인해주세요'); }
 }
 function updateCardStats(name){
@@ -580,6 +662,7 @@ function toggleModal(){
   document.getElementById('changelogModal').classList.toggle('show');
 }
 document.getElementById('btnVersion').addEventListener('click', toggleModal);
+document.getElementById('btnVersionRank').addEventListener('click', toggleModal);
 document.getElementById('btnVersionList').addEventListener('click', toggleModal);
 document.getElementById('btnModalClose').addEventListener('click', toggleModal);
 document.getElementById('changelogModal').addEventListener('click', (e) => {
@@ -587,6 +670,17 @@ document.getElementById('changelogModal').addEventListener('click', (e) => {
 });
 
 // ── 페이지 전환 ──
+document.getElementById('btnGoRank').addEventListener('click', () => {
+  document.getElementById('mainPage').classList.remove('show');
+  document.getElementById('rankPage').classList.add('show');
+  initRankSelectors();
+  renderRankPage();
+});
+document.getElementById('btnBackRank').addEventListener('click', () => {
+  document.getElementById('rankPage').classList.remove('show');
+  document.getElementById('mainPage').classList.add('show');
+});
+
 document.getElementById('btnGoList').addEventListener('click', () => {
   document.getElementById('mainPage').classList.remove('show');
   document.getElementById('listPage').classList.add('show');
@@ -833,6 +927,70 @@ document.getElementById('historyList').addEventListener('click', (e) => {
 });
 
 function updateCount(){}
+
+// ── 월간 랭킹 ──
+function initRankSelectors(){
+  const now = new Date();
+  const yearSel = document.getElementById('rankYear');
+  const monthSel = document.getElementById('rankMonth');
+
+  // 연도: 현재 연도부터 2024까지
+  const startYear = 2024;
+  const curYear = now.getFullYear();
+  yearSel.innerHTML = '';
+  for(let y = curYear; y >= startYear; y--){
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = `${y}년`;
+    if(y === curYear) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+
+  // 월
+  monthSel.innerHTML = '';
+  for(let m = 1; m <= 12; m++){
+    const opt = document.createElement('option');
+    opt.value = String(m).padStart(2,'0');
+    opt.textContent = `${m}월`;
+    if(m === now.getMonth()+1) opt.selected = true;
+    monthSel.appendChild(opt);
+  }
+
+  yearSel.addEventListener('change', renderRankPage);
+  monthSel.addEventListener('change', renderRankPage);
+}
+
+function renderRankPage(){
+  const year = document.getElementById('rankYear').value;
+  const month = document.getElementById('rankMonth').value;
+  const monthKey = `${year}-${month}`;
+
+  const entries = Object.values(monthlyReviews)
+    .filter(r => r.month === monthKey && r.count > 0)
+    .sort((a,b) => b.avg - a.avg || b.count - a.count)
+    .slice(0, 10);
+
+  const list = document.getElementById('rankList');
+  if(entries.length === 0){
+    list.innerHTML = `<div class="rank-empty">이 달의 기록이 없어요 🍽️</div>`;
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  const numClass = ['gold','silver','bronze'];
+  list.innerHTML = entries.map((r, i) => {
+    const num = i < 3 ? `<span style="font-size:22px">${medals[i]}</span>` : `<span class="rank-num normal">${i+1}</span>`;
+    return `<li class="rank-item">
+      <div style="min-width:32px;text-align:center">${num}</div>
+      <div class="rank-info">
+        <div class="rank-name">${r.name}</div>
+        <div class="rank-meta">${r.count}회 별점 등록</div>
+      </div>
+      <div class="rank-score">
+        <div class="rank-avg">★ ${r.avg.toFixed(1)}</div>
+      </div>
+    </li>`;
+  }).join('');
+}
 function renderHistory(){
   const wrap=document.getElementById('historyWrap'), list=document.getElementById('historyList');
   if(!history.length){ wrap.style.display='none'; return; }
