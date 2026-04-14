@@ -264,7 +264,6 @@
       <button class="btn-save" id="btnSaveMain">저장</button>
     </div>
 
-    <p class="count" id="count"></p>
     <div class="toggle-wrap">
       <span class="toggle-label" id="toggleLabel">최근 2주 간 곳 포함</span>
       <div class="toggle" id="filterToggle"></div>
@@ -766,10 +765,7 @@ document.getElementById('historyList').addEventListener('click', (e) => {
   document.getElementById('reviewBox').scrollIntoView({behavior:'smooth',block:'nearest'});
 });
 
-function updateCount(){
-  const el=document.getElementById('count');
-  if(history.length) el.textContent=`오늘 ${history.length}곳 뽑음 · 남은 곳 ${Math.max(0,restaurants.length-history.length)}곳`;
-}
+function updateCount(){}
 function renderHistory(){
   const wrap=document.getElementById('historyWrap'), list=document.getElementById('historyList');
   if(!history.length){ wrap.style.display='none'; return; }
