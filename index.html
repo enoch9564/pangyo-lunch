@@ -181,6 +181,53 @@
   }
   .toggle.on::after { transform: translateX(18px); }
 
+  /* 룰렛 */
+  .roulette-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 6px; width: 100%;
+  }
+  .roulette-strip-outer {
+    width: 100%; overflow: hidden; border-radius: 10px;
+    border: 2px solid #185FA5; background: #fff; position: relative; height: 52px;
+  }
+  .roulette-strip-outer::before, .roulette-strip-outer::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 40px; z-index: 2; pointer-events: none;
+  }
+  .roulette-strip-outer::before { left: 0; background: linear-gradient(to right, #fff, transparent); }
+  .roulette-strip-outer::after { right: 0; background: linear-gradient(to left, #fff, transparent); }
+  .roulette-center-mark {
+    position: absolute; left: 50%; top: 4px; bottom: 4px;
+    width: 2px; background: #185FA5; transform: translateX(-50%); z-index: 3;
+    border-radius: 2px;
+  }
+  .roulette-strip {
+    display: flex; align-items: center; height: 52px;
+    white-space: nowrap; will-change: transform;
+  }
+  .roulette-item {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 120px; padding: 0 16px; height: 44px; margin: 4px 4px;
+    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 8px;
+    font-size: 14px; font-weight: 500; color: #333; flex-shrink: 0;
+  }
+  .roulette-item.winner {
+    background: #185FA5; color: #fff; border-color: #185FA5;
+    transform: scale(1.05);
+  }
+  .roulette-label { font-size: 12px; color: #aaa; }
+
+  /* 팀 베스트 */
+  .best-card {
+    background: linear-gradient(135deg, #fff9ee 0%, #fffdf5 100%);
+    border: 1px solid #f5d87a; border-radius: 14px;
+    padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+    display: none; text-align: center;
+  }
+  .best-card.show { display: block; }
+  .best-title { font-size: 11px; color: #c8962a; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .best-name { font-size: 20px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .best-stats { font-size: 13px; color: #c8962a; }
+
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -193,6 +240,12 @@
     <h1>판교 점심 뽑기</h1>
     <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
     <p class="sync-bar" id="syncBar"></p>
+
+    <div class="best-card" id="bestCard">
+      <div class="best-title">🏆 이번 주 팀 베스트</div>
+      <div class="best-name" id="bestName">—</div>
+      <div class="best-stats" id="bestStats"></div>
+    </div>
 
     <div class="result-card" id="card">
       <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
@@ -225,7 +278,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersion">v1.4 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersion">v1.5 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -252,7 +305,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersionList">v1.4 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersionList">v1.5 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -266,6 +319,16 @@
       <button class="modal-close" id="btnModalClose">✕</button>
     </div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.5</span>
+          <span class="cl-title">룰렛 모드 + 이번 주 팀 베스트</span>
+        </div>
+        <ul class="cl-items">
+          <li>뽑기 버튼 누르면 룰렛이 돌아가며 당첨 식당 표시</li>
+          <li>이번 주 별점 가장 높은 식당 메인 화면 상단에 표시</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header">
           <span class="cl-version">v1.4</span>
@@ -432,6 +495,7 @@ onSnapshot(collection(db, 'reviews'), (snapshot) => {
   updateCount();
   if(history.length) renderHistory();
   if(document.getElementById('listPage').classList.contains('show')) renderListPage();
+  renderBestCard();
   const nameEl = document.getElementById('card').querySelector('.result-name');
   if(nameEl) updateCardStats(nameEl.textContent);
 }, () => setSyncBar('err', '⚠ 오프라인 — 별점은 연결 후 저장됩니다'));
@@ -441,8 +505,8 @@ function setSyncBar(type, msg){
   el.textContent = msg; el.className = 'sync-bar ' + type;
 }
 async function saveToFirestore(name, star, comment){
-  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:''};
-  if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; }
+  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastVisit:0};
+  if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; rv.lastVisit = Date.now(); }
   if(comment) rv.lastComment = comment;
   reviews[name] = rv;
   try { await setDoc(doc(db, 'reviews', name), rv); }
@@ -544,31 +608,111 @@ document.getElementById('btnSaveList').addEventListener('click', async () => {
   renderListPage();
 });
 
+// ── 팀 베스트 ──
+function renderBestCard(){
+  const now = Date.now();
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  // 이번 주 월요일 자정 기준
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay() + (d.getDay()===0?-6:1));
+  const weekStart = d.getTime();
+
+  // Firestore lastVisit 기준으로 이번 주 방문한 곳 중 최고 평점
+  const candidates = Object.entries(reviews)
+    .filter(([_, rv]) => rv.count > 0 && rv.lastVisit && rv.lastVisit >= weekStart)
+    .sort((a, b) => b[1].avg - a[1].avg);
+
+  const bestCard = document.getElementById('bestCard');
+  if(candidates.length === 0){ bestCard.classList.remove('show'); return; }
+  const [name, rv] = candidates[0];
+  document.getElementById('bestName').textContent = name;
+  document.getElementById('bestStats').textContent = `★ ${rv.avg.toFixed(1)} · ${rv.count}회 방문`;
+  bestCard.classList.add('show');
+}
+
+// ── 룰렛 애니메이션 ──
+function runRoulette(pool, winner, callback){
+  const card = document.getElementById('card');
+  // 룰렛 아이템 생성 (winner 포함 랜덤 섞기, 총 30개)
+  const items = [];
+  for(let i=0; i<28; i++) items.push(pool[Math.floor(Math.random()*pool.length)]);
+  items.push(winner);
+  items.push(winner); // 마지막 두 개를 winner로
+
+  card.innerHTML = `
+    <div class="roulette-wrap">
+      <div class="roulette-strip-outer">
+        <div class="roulette-center-mark"></div>
+        <div class="roulette-strip" id="rouletteStrip">
+          ${items.map((r,i) => `<div class="roulette-item" data-idx="${i}">${r.name}</div>`).join('')}
+        </div>
+      </div>
+      <div class="roulette-label">두근두근...</div>
+    </div>`;
+
+  // 레이아웃 계산 후 애니메이션 시작
+  requestAnimationFrame(() => {
+    const strip = document.getElementById('rouletteStrip');
+    if(!strip) return;
+    const itemEls = strip.querySelectorAll('.roulette-item');
+    const itemW = 144;
+    const cardW = card.offsetWidth || 360;
+    const centerOffset = cardW / 2 - itemW / 2;
+    const targetIdx = items.length - 1;
+    const targetX = -(targetIdx * itemW - centerOffset);
+
+    let start = null;
+    const duration = 2400;
+
+    function easeOut(t){ return 1 - Math.pow(1 - t, 4); }
+
+    function animate(ts){
+      if(!start) start = ts;
+      const elapsed = ts - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOut(progress);
+      const totalTravel = Math.abs(targetX) + centerOffset;
+      const x = -totalTravel * eased + centerOffset;
+      strip.style.transform = `translateX(${x}px)`;
+      if(progress < 1){
+        requestAnimationFrame(animate);
+      } else {
+        strip.style.transform = `translateX(${targetX}px)`;
+        itemEls[targetIdx].classList.add('winner');
+        const label = card.querySelector('.roulette-label');
+        if(label) label.textContent = '🎉';
+        setTimeout(callback, 700);
+      }
+    }
+    requestAnimationFrame(animate);
+  });
+}
+
 // ── 메인: 뽑기 ──
 document.getElementById('btn').addEventListener('click', () => {
   const btn = document.getElementById('btn');
-  const card = document.getElementById('card');
   btn.disabled=true; closeReview();
-  card.innerHTML='<span class="spin">&#8635;</span>';
-  setTimeout(()=>{
-    const used = history.map(h=>h.name);
-    const recentVisited = filterRecent ? getRecentVisited() : [];
-    let pool = restaurants.filter(r=>!used.includes(r.name) && !recentVisited.includes(r.name));
-    if(pool.length === 0) pool = restaurants.filter(r=>!used.includes(r.name));
-    if(pool.length === 0) pool = restaurants;
-    const r = pool[Math.floor(Math.random()*pool.length)];
+
+  const used = history.map(h=>h.name);
+  const recentVisited = filterRecent ? getRecentVisited() : [];
+  let pool = restaurants.filter(r=>!used.includes(r.name) && !recentVisited.includes(r.name));
+  if(pool.length === 0) pool = restaurants.filter(r=>!used.includes(r.name));
+  if(pool.length === 0) pool = restaurants;
+  const r = pool[Math.floor(Math.random()*pool.length)];
+
+  runRoulette(pool.length >= 5 ? pool : restaurants, r, () => {
     currentName=r.name; currentHistoryIdx=0; selectedStar=0;
     const rv=reviews[r.name];
     const stats = rv&&rv.count>0
       ? `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">"${rv.lastComment}"</div>`:''}`
       : '';
-    card.innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
+    document.getElementById('card').innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
     const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     saveVisit(r.name);
     history.unshift({name:r.name,time:t,star:0,comment:''});
     try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
     updateCount(); renderHistory(); openReview(r.name,0); btn.disabled=false;
-  },600);
+  });
 });
 
 // ── 메인: 별점 ──
