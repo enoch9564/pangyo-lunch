@@ -228,6 +228,31 @@
   .best-name { font-size: 20px; font-weight: 700; color: #111; margin-bottom: 4px; }
   .best-stats { font-size: 13px; color: #c8962a; }
 
+  /* 꽝 카드 */
+  .worst-card {
+    background: linear-gradient(135deg, #fff2f2 0%, #fff8f8 100%);
+    border: 1px solid #f5a7a7; border-radius: 14px;
+    padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+    display: none; text-align: center;
+  }
+  .worst-card.show { display: block; }
+  .worst-title { font-size: 11px; color: #c43a3a; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .worst-name { font-size: 20px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .worst-stats { font-size: 13px; color: #c43a3a; }
+
+  /* 닉네임 */
+  .nickname-wrap {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .nickname-input {
+    flex: 1; border: 1px solid #e8e8e5; border-radius: 8px;
+    padding: 7px 10px; font-size: 13px; color: #333;
+    font-family: inherit; background: #fff; outline: none;
+  }
+  .nickname-input:focus { border-color: #185FA5; }
+  .nickname-label { font-size: 12px; color: #aaa; white-space: nowrap; }
+
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -247,12 +272,22 @@
       <div class="best-stats" id="bestStats"></div>
     </div>
 
+    <div class="worst-card" id="worstCard">
+      <div class="worst-title">💀 이번 주 팀 꽝</div>
+      <div class="worst-name" id="worstName">—</div>
+      <div class="worst-stats" id="worstStats"></div>
+    </div>
+
     <div class="result-card" id="card">
       <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
     </div>
 
     <div class="review-box" id="reviewBox">
       <p class="review-label" id="reviewLabel">별점 &amp; 코멘트 남기기</p>
+      <div class="nickname-wrap">
+        <span class="nickname-label">닉네임</span>
+        <input class="nickname-input" id="nicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+      </div>
       <div class="stars" id="stars">
         <span class="star" data-star="1">★</span>
         <span class="star" data-star="2">★</span>
@@ -277,7 +312,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersion">v1.5 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersion">v1.6 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -292,6 +327,10 @@
     <ul class="all-list" id="allList"></ul>
     <div class="list-review-box" id="listReviewBox">
       <p class="review-label" id="listReviewLabel">별점 &amp; 코멘트</p>
+      <div class="nickname-wrap">
+        <span class="nickname-label">닉네임</span>
+        <input class="nickname-input" id="listNicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+      </div>
       <div class="stars" id="listStars">
         <span class="star" data-star="1">★</span>
         <span class="star" data-star="2">★</span>
@@ -304,7 +343,7 @@
     </div>
 
     <div class="version-bar">
-      <button class="version-btn" id="btnVersionList">v1.5 · 업데이트 내역</button>
+      <button class="version-btn" id="btnVersionList">v1.6 · 업데이트 내역</button>
     </div>
   </div>
 
@@ -318,6 +357,16 @@
       <button class="modal-close" id="btnModalClose">✕</button>
     </div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.6</span>
+          <span class="cl-title">닉네임 + 이번 주 꽝 맛집</span>
+        </div>
+        <ul class="cl-items">
+          <li>별점 남길 때 닉네임 입력 — 누가 남긴 코멘트인지 표시</li>
+          <li>이번 주 별점 가장 낮은 식당 꽝 카드로 표시 😂</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header">
           <span class="cl-version">v1.5</span>
@@ -503,10 +552,11 @@ function setSyncBar(type, msg){
   const el = document.getElementById('syncBar');
   el.textContent = msg; el.className = 'sync-bar ' + type;
 }
-async function saveToFirestore(name, star, comment){
-  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastVisit:0};
+async function saveToFirestore(name, star, comment, nickname=''){
+  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastNickname:'', lastVisit:0};
   if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; rv.lastVisit = Date.now(); }
   if(comment) rv.lastComment = comment;
+  if(nickname) rv.lastNickname = nickname;
   reviews[name] = rv;
   try { await setDoc(doc(db, 'reviews', name), rv); }
   catch(e){ setSyncBar('err', '⚠ 저장 실패 — 네트워크를 확인해주세요'); }
@@ -519,7 +569,8 @@ function updateCardStats(name){
   const existing = card.querySelector('.result-stats');
   const commentEl = card.querySelector('.result-last-comment');
   if(!rv || rv.count === 0){ if(existing) existing.remove(); if(commentEl) commentEl.remove(); return; }
-  const html = `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">"${rv.lastComment}"</div>`:''}`;
+  const commentLine = rv.lastComment ? `<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>` : '';
+  const html = `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${commentLine}`;
   if(existing){ if(commentEl) commentEl.remove(); existing.outerHTML = html; }
   else { card.insertAdjacentHTML('beforeend', html); }
 }
@@ -601,7 +652,8 @@ function renderListStars(n){
 document.getElementById('btnSaveList').addEventListener('click', async () => {
   if(!listSelectedName) return;
   const comment = document.getElementById('listCommentInput').value.trim();
-  if(listSelectedStar>0||comment) await saveToFirestore(listSelectedName, listSelectedStar, comment);
+  const nickname = document.getElementById('listNicknameInput').value.trim();
+  if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName, listSelectedStar, comment, nickname);
   listSelectedName=null; listSelectedStar=0;
   document.getElementById('listReviewBox').classList.remove('show');
   renderListPage();
@@ -622,11 +674,26 @@ function renderBestCard(){
     .sort((a, b) => b[1].avg - a[1].avg);
 
   const bestCard = document.getElementById('bestCard');
-  if(candidates.length === 0){ bestCard.classList.remove('show'); return; }
-  const [name, rv] = candidates[0];
-  document.getElementById('bestName').textContent = name;
-  document.getElementById('bestStats').textContent = `★ ${rv.avg.toFixed(1)} · ${rv.count}회 방문`;
+  const worstCard = document.getElementById('worstCard');
+  if(candidates.length === 0){
+    bestCard.classList.remove('show');
+    worstCard.classList.remove('show');
+    return;
+  }
+  const [bestName, bestRv] = candidates[0];
+  document.getElementById('bestName').textContent = bestName;
+  document.getElementById('bestStats').textContent = `★ ${bestRv.avg.toFixed(1)} · ${bestRv.count}회 방문`;
   bestCard.classList.add('show');
+
+  // 꽝: 2개 이상일 때만 표시
+  if(candidates.length >= 2){
+    const [worstName, worstRv] = candidates[candidates.length - 1];
+    document.getElementById('worstName').textContent = worstName;
+    document.getElementById('worstStats').textContent = `★ ${worstRv.avg.toFixed(1)} · ${worstRv.count}회 방문`;
+    worstCard.classList.add('show');
+  } else {
+    worstCard.classList.remove('show');
+  }
 }
 
 // ── 룰렛 애니메이션 ──
@@ -703,7 +770,7 @@ document.getElementById('btn').addEventListener('click', () => {
     currentName=r.name; currentHistoryIdx=0; selectedStar=0;
     const rv=reviews[r.name];
     const stats = rv&&rv.count>0
-      ? `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">"${rv.lastComment}"</div>`:''}`
+      ? `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">${rv.lastNickname?`<b>${rv.lastNickname}</b> · `:''}"${rv.lastComment}"</div>`:''}`
       : '';
     document.getElementById('card').innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
     const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
@@ -740,11 +807,12 @@ document.getElementById('btnSaveMain').addEventListener('click', async () => {
   if(!currentName) return;
   const comment=document.getElementById('commentInput').value.trim();
   const star=selectedStar;
-  if(star>0||comment){
+  const nickname = document.getElementById('nicknameInput').value.trim();
+  if(star>0||comment||nickname){
     const prevStar=(history[currentHistoryIdx]||{}).star||0;
-    const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:''};
+    const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:'',lastNickname:''};
     if(prevStar>0&&rv.count>0){ rv.total-=prevStar; rv.count--; }
-    await saveToFirestore(currentName, star, comment);
+    await saveToFirestore(currentName, star, comment, nickname);
   }
   if(history[currentHistoryIdx]){
     if(star>0) history[currentHistoryIdx].star=star;
