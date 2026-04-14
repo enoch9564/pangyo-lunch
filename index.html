@@ -171,7 +171,7 @@
   <div class="page show" id="mainPage">
     <h1>판교 점심 뽑기</h1>
     <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
-    <p class="sync-bar" id="syncBar">데이터 불러오는 중...</p>
+    <p class="sync-bar" id="syncBar"></p>
 
     <div class="result-card" id="card">
       <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
@@ -366,7 +366,7 @@ let activeFilter = '전체';
 // ── Firebase 실시간 리스닝 ──
 onSnapshot(collection(db, 'reviews'), (snapshot) => {
   snapshot.forEach(d => { reviews[d.id] = d.data(); });
-  setSyncBar('ok', '✓ 공유 데이터 연결됨');
+  document.getElementById('syncBar').textContent = '';
   updateCount();
   if(history.length) renderHistory();
   if(document.getElementById('listPage').classList.contains('show')) renderListPage();
