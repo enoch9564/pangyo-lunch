@@ -22,22 +22,21 @@
     max-width: 440px;
     width: 100%;
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-    text-align: center;
   }
-  h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #888; margin-bottom: 2rem; }
+
+  /* ── 공통 ── */
+  .page { display: none; }
+  .page.show { display: block; }
+  h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 4px; text-align:center; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 2rem; text-align:center; }
+
+  /* ── 메인 페이지 ── */
   .result-card {
-    background: #fafaf8;
-    border: 1px solid #e8e8e5;
-    border-radius: 14px;
-    padding: 2rem 1.5rem;
-    min-height: 160px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 1.25rem;
+    background: #fafaf8; border: 1px solid #e8e8e5;
+    border-radius: 14px; padding: 2rem 1.5rem; min-height: 160px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; margin-bottom: 1.25rem;
+    text-align: center;
   }
   .placeholder { color: #aaa; font-size: 15px; }
   .result-name { font-size: 30px; font-weight: 700; color: #111; }
@@ -46,126 +45,191 @@
   .badge-genre { background: #EEEDFE; color: #3C3489; }
   .badge-loc { background: #E1F5EE; color: #085041; }
   .result-desc { font-size: 14px; color: #666; }
-  .result-stats {
-    font-size: 13px;
-    color: #888;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .result-last-comment {
-    font-size: 12px;
-    color: #aaa;
-    font-style: italic;
-    max-width: 260px;
-    text-align: center;
-    line-height: 1.4;
-  }
+  .result-stats { font-size: 13px; color: #888; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .result-last-comment { font-size: 12px; color: #aaa; font-style: italic; max-width: 260px; text-align: center; line-height: 1.4; }
+
+  /* 리뷰 박스 */
   .review-box {
-    background: #fafaf8;
-    border: 1px solid #e8e8e5;
-    border-radius: 14px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.25rem;
-    text-align: left;
-    display: none;
+    background: #fafaf8; border: 1px solid #e8e8e5;
+    border-radius: 14px; padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem; text-align: left; display: none;
   }
   .review-box.show { display: block; }
-  .review-label { font-size: 12px; color: #aaa; margin-bottom: 8px; letter-spacing: .04em; text-transform: uppercase; }
+  .review-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 10px; }
   .stars { display: flex; gap: 6px; margin-bottom: 12px; }
   .star { font-size: 26px; cursor: pointer; color: #ddd; transition: color .1s, transform .1s; line-height: 1; }
   .star.on { color: #f5a623; }
   .star:hover { transform: scale(1.15); }
   .comment-input {
-    width: 100%;
-    border: 1px solid #e8e8e5;
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 13px;
-    color: #333;
-    resize: none;
-    font-family: inherit;
-    background: #fff;
-    margin-bottom: 10px;
-    outline: none;
+    width: 100%; border: 1px solid #e8e8e5; border-radius: 8px;
+    padding: 9px 12px; font-size: 13px; color: #333;
+    resize: none; font-family: inherit; background: #fff;
+    margin-bottom: 10px; outline: none;
   }
   .comment-input:focus { border-color: #185FA5; }
   .btn-save {
-    width: 100%;
-    background: #fff;
-    color: #185FA5;
-    border: 1.5px solid #185FA5;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px;
-    cursor: pointer;
-    transition: background .15s;
+    width: 100%; background: #fff; color: #185FA5;
+    border: 1.5px solid #185FA5; border-radius: 8px;
+    font-size: 14px; font-weight: 600; padding: 10px;
+    cursor: pointer; transition: background .15s;
   }
   .btn-save:hover { background: #f0f6ff; }
+
   .btn-pick {
-    width: 100%;
-    background: #185FA5;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 17px;
-    font-weight: 600;
-    padding: 15px;
-    cursor: pointer;
-    transition: background .15s, transform .1s;
-    margin-bottom: 1.5rem;
+    width: 100%; background: #185FA5; color: #fff; border: none;
+    border-radius: 10px; font-size: 17px; font-weight: 600;
+    padding: 15px; cursor: pointer;
+    transition: background .15s, transform .1s; margin-bottom: .75rem;
   }
   .btn-pick:hover { background: #145088; }
   .btn-pick:active { transform: scale(0.98); }
   .btn-pick:disabled { background: #b0c4d8; cursor: default; }
-  .count { font-size: 12px; color: #aaa; margin-bottom: 1.5rem; }
+
+  .btn-list {
+    width: 100%; background: #fff; color: #555;
+    border: 1px solid #e0e0dc; border-radius: 10px;
+    font-size: 14px; font-weight: 500; padding: 11px;
+    cursor: pointer; transition: background .15s; margin-bottom: 1.5rem;
+  }
+  .btn-list:hover { background: #f5f5f3; }
+
+  .count { font-size: 12px; color: #aaa; margin-bottom: 1.25rem; text-align:center; }
+
   .history { text-align: left; }
   .history-title { font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
   .history-list { list-style: none; }
-  .history-list li { font-size: 13px; color: #555; padding: 8px 0; border-bottom: 1px solid #f0f0ee; }
+  .history-list li {
+    font-size: 13px; color: #555; padding: 9px 10px;
+    border-bottom: 1px solid #f0f0ee; cursor: pointer;
+    border-radius: 8px; transition: background .12s;
+  }
+  .history-list li:hover { background: #f7f7f5; }
   .history-list li:last-child { border-bottom: none; }
+  .history-list li.active { background: #f0f6ff; }
   .history-row { display: flex; justify-content: space-between; align-items: center; }
   .history-name { font-weight: 500; }
   .history-right { display: flex; align-items: center; gap: 6px; }
   .history-stars { color: #f5a623; font-size: 12px; letter-spacing: -1px; }
   .history-time { color: #bbb; font-size: 12px; }
   .history-comment { font-size: 12px; color: #aaa; margin-top: 3px; font-style: italic; }
+  .edit-hint { font-size: 11px; color: #b0c4d8; border: 1px solid #d8e8f5; border-radius: 10px; padding: 2px 7px; }
+
+  /* ── 전체목록 페이지 ── */
+  .list-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .btn-back {
+    background: none; border: none; cursor: pointer;
+    font-size: 20px; color: #555; padding: 4px 6px;
+    border-radius: 8px; transition: background .12s; line-height: 1;
+  }
+  .btn-back:hover { background: #f0f0ee; }
+  .list-title { font-size: 18px; font-weight: 600; color: #111; }
+  .list-count { font-size: 13px; color: #aaa; margin-left: auto; }
+
+  /* 장르 필터 */
+  .filter-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .filter-btn {
+    font-size: 12px; padding: 4px 12px; border-radius: 20px;
+    border: 1px solid #e0e0dc; background: #fff; color: #666;
+    cursor: pointer; transition: all .12s;
+  }
+  .filter-btn.on { background: #185FA5; color: #fff; border-color: #185FA5; }
+
+  .all-list { list-style: none; }
+  .all-list li {
+    padding: 11px 10px; border-bottom: 1px solid #f0f0ee;
+    cursor: pointer; border-radius: 10px; transition: background .12s;
+  }
+  .all-list li:hover { background: #f7f7f5; }
+  .all-list li:last-child { border-bottom: none; }
+  .all-list li.active { background: #f0f6ff; }
+  .all-row { display: flex; justify-content: space-between; align-items: center; }
+  .all-name { font-size: 14px; font-weight: 500; color: #111; }
+  .all-meta { font-size: 12px; color: #aaa; margin-top: 3px; }
+  .all-stats { text-align: right; }
+  .all-avg { font-size: 14px; font-weight: 600; color: #f5a623; }
+  .all-visits { font-size: 11px; color: #bbb; margin-top: 2px; }
+  .no-review { font-size: 12px; color: #ddd; }
+
+  /* 전체목록 리뷰 박스 */
+  .list-review-box {
+    background: #f0f6ff; border: 1px solid #c8ddf5;
+    border-radius: 12px; padding: 1.25rem 1.5rem;
+    margin: 8px 0 4px; display: none; text-align: left;
+  }
+  .list-review-box.show { display: block; }
+
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>판교 점심 뽑기</h1>
-  <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
 
-  <div class="result-card" id="card">
-    <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
-  </div>
+  <!-- ══ 메인 페이지 ══ -->
+  <div class="page show" id="mainPage">
+    <h1>판교 점심 뽑기</h1>
+    <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
 
-  <div class="review-box" id="reviewBox">
-    <p class="review-label">별점 &amp; 코멘트 남기기</p>
-    <div class="stars" id="stars">
-      <span class="star" onclick="setStar(1)">★</span>
-      <span class="star" onclick="setStar(2)">★</span>
-      <span class="star" onclick="setStar(3)">★</span>
-      <span class="star" onclick="setStar(4)">★</span>
-      <span class="star" onclick="setStar(5)">★</span>
+    <div class="result-card" id="card">
+      <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
     </div>
-    <textarea class="comment-input" id="commentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
-    <button class="btn-save" onclick="saveReview()">저장</button>
+
+    <div class="review-box" id="reviewBox">
+      <p class="review-label" id="reviewLabel">별점 &amp; 코멘트 남기기</p>
+      <div class="stars" id="stars">
+        <span class="star" onclick="setStar(1)">★</span>
+        <span class="star" onclick="setStar(2)">★</span>
+        <span class="star" onclick="setStar(3)">★</span>
+        <span class="star" onclick="setStar(4)">★</span>
+        <span class="star" onclick="setStar(5)">★</span>
+      </div>
+      <textarea class="comment-input" id="commentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
+      <button class="btn-save" onclick="saveReview()">저장</button>
+    </div>
+
+    <p class="count" id="count"></p>
+    <button class="btn-pick" id="btn" onclick="pick()">오늘 점심 뽑기</button>
+    <button class="btn-list" onclick="goList()">전체 맛집 목록 보기</button>
+
+    <div class="history" id="historyWrap" style="display:none;">
+      <p class="history-title">오늘 뽑은 기록 <span style="font-weight:400;color:#b0c4d8;font-size:11px;">· 눌러서 별점 남기기</span></p>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
   </div>
 
-  <p class="count" id="count"></p>
-  <button class="btn-pick" id="btn" onclick="pick()">오늘 점심 뽑기</button>
+  <!-- ══ 전체목록 페이지 ══ -->
+  <div class="page" id="listPage">
+    <div class="list-header">
+      <button class="btn-back" onclick="goBack()">←</button>
+      <span class="list-title">전체 맛집 목록</span>
+      <span class="list-count" id="listCount"></span>
+    </div>
 
-  <div class="history" id="historyWrap" style="display:none;">
-    <p class="history-title">오늘 뽑은 기록</p>
-    <ul class="history-list" id="historyList"></ul>
+    <div class="filter-bar" id="filterBar"></div>
+
+    <ul class="all-list" id="allList"></ul>
+
+    <!-- 전체목록 리뷰 박스 -->
+    <div class="list-review-box" id="listReviewBox">
+      <p class="review-label" id="listReviewLabel">별점 &amp; 코멘트</p>
+      <div class="stars" id="listStars">
+        <span class="star" onclick="setListStar(1)">★</span>
+        <span class="star" onclick="setListStar(2)">★</span>
+        <span class="star" onclick="setListStar(3)">★</span>
+        <span class="star" onclick="setListStar(4)">★</span>
+        <span class="star" onclick="setListStar(5)">★</span>
+      </div>
+      <textarea class="comment-input" id="listCommentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
+      <button class="btn-save" onclick="saveListReview()">저장</button>
+    </div>
   </div>
+
 </div>
 
 <script>
@@ -225,17 +289,117 @@ let history = [];
 try { history = JSON.parse(localStorage.getItem(DAY_KEY) || '[]'); } catch(e){}
 
 let currentName = null;
+let currentHistoryIdx = null;
 let selectedStar = 0;
+
+// 전체목록 상태
+let listSelectedName = null;
+let listSelectedStar = 0;
+let activeFilter = '전체';
 
 updateCount();
 if(history.length) renderHistory();
 
+/* ── 페이지 전환 ── */
+function goList(){
+  document.getElementById('mainPage').classList.remove('show');
+  document.getElementById('listPage').classList.add('show');
+  renderListPage();
+}
+function goBack(){
+  document.getElementById('listPage').classList.remove('show');
+  document.getElementById('mainPage').classList.add('show');
+  listSelectedName = null;
+  document.getElementById('listReviewBox').classList.remove('show');
+}
+
+/* ── 전체목록 렌더 ── */
+function renderListPage(){
+  // 필터 버튼
+  const genres = ['전체', ...new Set(restaurants.map(r => r.genre))];
+  document.getElementById('filterBar').innerHTML = genres.map(g =>
+    `<button class="filter-btn ${g === activeFilter ? 'on' : ''}" onclick="setFilter('${g}')">${g}</button>`
+  ).join('');
+
+  const filtered = activeFilter === '전체' ? restaurants : restaurants.filter(r => r.genre === activeFilter);
+  document.getElementById('listCount').textContent = `${filtered.length}곳`;
+
+  document.getElementById('allList').innerHTML = filtered.map(r => {
+    const rv = reviews[r.name];
+    const statsHtml = rv && rv.count > 0
+      ? `<div class="all-avg">★ ${rv.avg.toFixed(1)}</div>
+         <div class="all-visits">${rv.count}회 방문</div>`
+      : `<div class="no-review">미방문</div>`;
+    const isActive = listSelectedName === r.name;
+    return `<li onclick="toggleListReview('${r.name}')" class="${isActive ? 'active' : ''}">
+      <div class="all-row">
+        <div>
+          <div class="all-name">${r.name}</div>
+          <div class="all-meta">${r.genre} · ${r.loc}</div>
+        </div>
+        <div class="all-stats">${statsHtml}</div>
+      </div>
+    </li>`;
+  }).join('');
+}
+
+function setFilter(g){
+  activeFilter = g;
+  listSelectedName = null;
+  document.getElementById('listReviewBox').classList.remove('show');
+  renderListPage();
+}
+
+function toggleListReview(name){
+  const box = document.getElementById('listReviewBox');
+  if(listSelectedName === name && box.classList.contains('show')){
+    listSelectedName = null;
+    listSelectedStar = 0;
+    box.classList.remove('show');
+    renderListPage();
+    return;
+  }
+  listSelectedName = name;
+  listSelectedStar = 0;
+  document.getElementById('listReviewLabel').textContent = `"${name}" 별점 & 코멘트`;
+  document.getElementById('listCommentInput').value = '';
+  renderListStars(0);
+  box.classList.add('show');
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+  renderListPage();
+}
+
+function setListStar(n){
+  listSelectedStar = n;
+  renderListStars(n);
+}
+function renderListStars(n){
+  document.querySelectorAll('#listStars .star').forEach((el,i) => el.classList.toggle('on', i < n));
+}
+
+function saveListReview(){
+  if(!listSelectedName) return;
+  const comment = document.getElementById('listCommentInput').value.trim();
+  const star = listSelectedStar;
+  if(star > 0 || comment){
+    const rv = reviews[listSelectedName] || {count:0, total:0, avg:0, lastComment:''};
+    if(star > 0){ rv.count += 1; rv.total += star; rv.avg = rv.total / rv.count; }
+    if(comment) rv.lastComment = comment;
+    reviews[listSelectedName] = rv;
+    try { localStorage.setItem(REVIEW_KEY, JSON.stringify(reviews)); } catch(e){}
+  }
+  listSelectedName = null;
+  listSelectedStar = 0;
+  document.getElementById('listReviewBox').classList.remove('show');
+  renderListPage();
+}
+
+/* ── 메인: 뽑기 ── */
 function pick(){
   const btn = document.getElementById('btn');
   const card = document.getElementById('card');
-  const reviewBox = document.getElementById('reviewBox');
   btn.disabled = true;
-  reviewBox.classList.remove('show');
+  closeReview();
   card.innerHTML = '<span class="spin">&#8635;</span>';
 
   setTimeout(()=>{
@@ -243,10 +407,10 @@ function pick(){
     const available = restaurants.filter(r => !used.includes(r.name));
     const pool = available.length > 0 ? available : restaurants;
     const r = pool[Math.floor(Math.random() * pool.length)];
+
     currentName = r.name;
+    currentHistoryIdx = 0;
     selectedStar = 0;
-    document.getElementById('commentInput').value = '';
-    renderStars(0);
 
     const rv = reviews[r.name];
     const statsHtml = rv && rv.count > 0
@@ -273,66 +437,83 @@ function pick(){
     try { localStorage.setItem(DAY_KEY, JSON.stringify(history)); } catch(e){}
     updateCount();
     renderHistory();
-    reviewBox.classList.add('show');
+    openReview(r.name, 0);
     btn.disabled = false;
   }, 600);
 }
 
-function setStar(n){
-  selectedStar = n;
-  renderStars(n);
+/* ── 메인: 리뷰 ── */
+function openReview(name, histIdx){
+  currentName = name;
+  currentHistoryIdx = histIdx;
+  const h = history[histIdx] || {};
+  selectedStar = h.star || 0;
+  document.getElementById('commentInput').value = h.comment || '';
+  document.getElementById('reviewLabel').textContent = `"${name}" 별점 & 코멘트`;
+  renderStars(selectedStar);
+  document.getElementById('reviewBox').classList.add('show');
+  renderHistory();
 }
-
+function closeReview(){
+  currentName = null;
+  currentHistoryIdx = null;
+  selectedStar = 0;
+  document.getElementById('reviewBox').classList.remove('show');
+  renderHistory();
+}
+function openReviewFromHistory(idx){
+  if(currentHistoryIdx === idx && document.getElementById('reviewBox').classList.contains('show')){
+    closeReview(); return;
+  }
+  const h = history[idx];
+  if(!h) return;
+  openReview(h.name, idx);
+  document.getElementById('reviewBox').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function setStar(n){ selectedStar = n; renderStars(n); }
 function renderStars(n){
-  document.querySelectorAll('.star').forEach((el, i) => {
-    el.classList.toggle('on', i < n);
-  });
+  document.querySelectorAll('#stars .star').forEach((el,i) => el.classList.toggle('on', i < n));
 }
-
 function saveReview(){
   if(!currentName) return;
   const comment = document.getElementById('commentInput').value.trim();
   const star = selectedStar;
-
-  if(star > 0){
+  if(star > 0 || comment){
     const rv = reviews[currentName] || {count:0, total:0, avg:0, lastComment:''};
-    rv.count += 1;
-    rv.total += star;
-    rv.avg = rv.total / rv.count;
+    if(star > 0){
+      const prevStar = (history[currentHistoryIdx] || {}).star || 0;
+      if(prevStar > 0 && rv.count > 0){ rv.total -= prevStar; rv.count -= 1; }
+      rv.count += 1; rv.total += star; rv.avg = rv.total / rv.count;
+    }
     if(comment) rv.lastComment = comment;
     reviews[currentName] = rv;
     try { localStorage.setItem(REVIEW_KEY, JSON.stringify(reviews)); } catch(e){}
 
-    // 카드 즉시 반영
     const card = document.getElementById('card');
-    const existing = card.querySelector('.result-stats');
-    const newHtml = `<div class="result-stats">
-      <span>★ ${rv.avg.toFixed(1)}</span>
-      <span style="color:#ddd">|</span>
-      <span>${rv.count}회 방문</span>
-    </div>${rv.lastComment ? `<div class="result-last-comment">"${rv.lastComment}"</div>` : ''}`;
-    if(existing){
-      const next = existing.nextElementSibling;
-      if(next && next.classList.contains('result-last-comment')) next.remove();
-      existing.outerHTML = newHtml;
-    } else {
-      card.insertAdjacentHTML('beforeend', newHtml);
+    const nameEl = card.querySelector('.result-name');
+    if(nameEl && nameEl.textContent === currentName){
+      const rv2 = reviews[currentName];
+      const existing = card.querySelector('.result-stats');
+      const newHtml = `<div class="result-stats">
+        <span>★ ${rv2.avg.toFixed(1)}</span>
+        <span style="color:#ddd">|</span>
+        <span>${rv2.count}회 방문</span>
+      </div>${rv2.lastComment ? `<div class="result-last-comment">"${rv2.lastComment}"</div>` : ''}`;
+      if(existing){
+        const next = existing.nextElementSibling;
+        if(next && next.classList.contains('result-last-comment')) next.remove();
+        existing.outerHTML = newHtml;
+      } else {
+        card.insertAdjacentHTML('beforeend', newHtml);
+      }
     }
-  } else if(comment) {
-    const rv = reviews[currentName] || {count:0, total:0, avg:0, lastComment:''};
-    rv.lastComment = comment;
-    reviews[currentName] = rv;
-    try { localStorage.setItem(REVIEW_KEY, JSON.stringify(reviews)); } catch(e){}
   }
-
-  if(history.length){
-    if(star > 0) history[0].star = star;
-    if(comment) history[0].comment = comment;
+  if(history[currentHistoryIdx]){
+    if(star > 0) history[currentHistoryIdx].star = star;
+    if(comment) history[currentHistoryIdx].comment = comment;
     try { localStorage.setItem(DAY_KEY, JSON.stringify(history)); } catch(e){}
   }
-  renderHistory();
-  document.getElementById('reviewBox').classList.remove('show');
-  currentName = null;
+  closeReview();
 }
 
 function updateCount(){
@@ -341,20 +522,21 @@ function updateCount(){
   const el = document.getElementById('count');
   if(used > 0) el.textContent = `오늘 ${used}곳 뽑음 · 남은 곳 ${Math.max(0, total - used)}곳`;
 }
-
 function renderHistory(){
   const wrap = document.getElementById('historyWrap');
   const list = document.getElementById('historyList');
   if(!history.length){ wrap.style.display='none'; return; }
   wrap.style.display = 'block';
-  list.innerHTML = history.slice(0,5).map(h => {
-    const starStr = h.star ? '★'.repeat(h.star) + '☆'.repeat(5 - h.star) : '';
+  list.innerHTML = history.slice(0,5).map((h,i) => {
+    const starStr = h.star ? '★'.repeat(h.star)+'☆'.repeat(5-h.star) : '';
     const commentStr = h.comment ? `<div class="history-comment">"${h.comment}"</div>` : '';
-    return `<li>
+    const isActive = currentHistoryIdx === i && document.getElementById('reviewBox').classList.contains('show');
+    const hint = !h.star ? `<span class="edit-hint">+ 별점</span>` : '';
+    return `<li onclick="openReviewFromHistory(${i})" class="${isActive?'active':''}">
       <div class="history-row">
         <span class="history-name">${h.name}</span>
         <div class="history-right">
-          ${starStr ? `<span class="history-stars">${starStr}</span>` : ''}
+          ${starStr ? `<span class="history-stars">${starStr}</span>` : hint}
           <span class="history-time">${h.time}</span>
         </div>
       </div>
