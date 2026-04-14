@@ -8,35 +8,26 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f3;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
+    background: #f5f5f3; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 1.5rem;
   }
   .container {
-    background: #fff;
-    border-radius: 16px;
-    padding: 2.5rem 2rem;
-    max-width: 440px;
-    width: 100%;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    background: #fff; border-radius: 16px; padding: 2.5rem 2rem;
+    max-width: 440px; width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
-
-  /* ── 공통 ── */
   .page { display: none; }
   .page.show { display: block; }
   h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 4px; text-align:center; }
   .subtitle { font-size: 13px; color: #888; margin-bottom: 2rem; text-align:center; }
+  .sync-bar { font-size: 12px; color: #aaa; text-align:center; margin-bottom: 1rem; min-height: 18px; }
+  .sync-bar.ok { color: #1D9E75; }
+  .sync-bar.err { color: #E24B4A; }
 
-  /* ── 메인 페이지 ── */
   .result-card {
-    background: #fafaf8; border: 1px solid #e8e8e5;
-    border-radius: 14px; padding: 2rem 1.5rem; min-height: 160px;
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 10px; margin-bottom: 1.25rem;
-    text-align: center;
+    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 14px;
+    padding: 2rem 1.5rem; min-height: 160px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 1.25rem; text-align: center;
   }
   .placeholder { color: #aaa; font-size: 15px; }
   .result-name { font-size: 30px; font-weight: 700; color: #111; }
@@ -48,11 +39,9 @@
   .result-stats { font-size: 13px; color: #888; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
   .result-last-comment { font-size: 12px; color: #aaa; font-style: italic; max-width: 260px; text-align: center; line-height: 1.4; }
 
-  /* 리뷰 박스 */
   .review-box {
-    background: #fafaf8; border: 1px solid #e8e8e5;
-    border-radius: 14px; padding: 1.25rem 1.5rem;
-    margin-bottom: 1.25rem; text-align: left; display: none;
+    background: #fafaf8; border: 1px solid #e8e8e5; border-radius: 14px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; text-align: left; display: none;
   }
   .review-box.show { display: block; }
   .review-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 10px; }
@@ -62,46 +51,38 @@
   .star:hover { transform: scale(1.15); }
   .comment-input {
     width: 100%; border: 1px solid #e8e8e5; border-radius: 8px;
-    padding: 9px 12px; font-size: 13px; color: #333;
-    resize: none; font-family: inherit; background: #fff;
-    margin-bottom: 10px; outline: none;
+    padding: 9px 12px; font-size: 13px; color: #333; resize: none;
+    font-family: inherit; background: #fff; margin-bottom: 10px; outline: none;
   }
   .comment-input:focus { border-color: #185FA5; }
   .btn-save {
-    width: 100%; background: #fff; color: #185FA5;
-    border: 1.5px solid #185FA5; border-radius: 8px;
-    font-size: 14px; font-weight: 600; padding: 10px;
+    width: 100%; background: #fff; color: #185FA5; border: 1.5px solid #185FA5;
+    border-radius: 8px; font-size: 14px; font-weight: 600; padding: 10px;
     cursor: pointer; transition: background .15s;
   }
   .btn-save:hover { background: #f0f6ff; }
-
   .btn-pick {
     width: 100%; background: #185FA5; color: #fff; border: none;
-    border-radius: 10px; font-size: 17px; font-weight: 600;
-    padding: 15px; cursor: pointer;
-    transition: background .15s, transform .1s; margin-bottom: .75rem;
+    border-radius: 10px; font-size: 17px; font-weight: 600; padding: 15px;
+    cursor: pointer; transition: background .15s, transform .1s; margin-bottom: .75rem;
   }
   .btn-pick:hover { background: #145088; }
   .btn-pick:active { transform: scale(0.98); }
   .btn-pick:disabled { background: #b0c4d8; cursor: default; }
-
   .btn-list {
-    width: 100%; background: #fff; color: #555;
-    border: 1px solid #e0e0dc; border-radius: 10px;
-    font-size: 14px; font-weight: 500; padding: 11px;
+    width: 100%; background: #fff; color: #555; border: 1px solid #e0e0dc;
+    border-radius: 10px; font-size: 14px; font-weight: 500; padding: 11px;
     cursor: pointer; transition: background .15s; margin-bottom: 1.5rem;
   }
   .btn-list:hover { background: #f5f5f3; }
-
   .count { font-size: 12px; color: #aaa; margin-bottom: 1.25rem; text-align:center; }
 
   .history { text-align: left; }
   .history-title { font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
   .history-list { list-style: none; }
   .history-list li {
-    font-size: 13px; color: #555; padding: 9px 10px;
-    border-bottom: 1px solid #f0f0ee; cursor: pointer;
-    border-radius: 8px; transition: background .12s;
+    font-size: 13px; color: #555; padding: 9px 10px; border-bottom: 1px solid #f0f0ee;
+    cursor: pointer; border-radius: 8px; transition: background .12s;
   }
   .history-list li:hover { background: #f7f7f5; }
   .history-list li:last-child { border-bottom: none; }
@@ -114,37 +95,17 @@
   .history-comment { font-size: 12px; color: #aaa; margin-top: 3px; font-style: italic; }
   .edit-hint { font-size: 11px; color: #b0c4d8; border: 1px solid #d8e8f5; border-radius: 10px; padding: 2px 7px; }
 
-  /* ── 전체목록 페이지 ── */
-  .list-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-  .btn-back {
-    background: none; border: none; cursor: pointer;
-    font-size: 20px; color: #555; padding: 4px 6px;
-    border-radius: 8px; transition: background .12s; line-height: 1;
-  }
+  /* 전체목록 */
+  .list-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+  .btn-back { background: none; border: none; cursor: pointer; font-size: 20px; color: #555; padding: 4px 6px; border-radius: 8px; transition: background .12s; line-height: 1; }
   .btn-back:hover { background: #f0f0ee; }
   .list-title { font-size: 18px; font-weight: 600; color: #111; }
   .list-count { font-size: 13px; color: #aaa; margin-left: auto; }
-
-  /* 장르 필터 */
-  .filter-bar {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-  }
-  .filter-btn {
-    font-size: 12px; padding: 4px 12px; border-radius: 20px;
-    border: 1px solid #e0e0dc; background: #fff; color: #666;
-    cursor: pointer; transition: all .12s;
-  }
+  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid #e0e0dc; background: #fff; color: #666; cursor: pointer; transition: all .12s; }
   .filter-btn.on { background: #185FA5; color: #fff; border-color: #185FA5; }
-
   .all-list { list-style: none; }
-  .all-list li {
-    padding: 11px 10px; border-bottom: 1px solid #f0f0ee;
-    cursor: pointer; border-radius: 10px; transition: background .12s;
-  }
+  .all-list li { padding: 11px 10px; border-bottom: 1px solid #f0f0ee; cursor: pointer; border-radius: 10px; transition: background .12s; }
   .all-list li:hover { background: #f7f7f5; }
   .all-list li:last-child { border-bottom: none; }
   .all-list li.active { background: #f0f6ff; }
@@ -155,14 +116,49 @@
   .all-avg { font-size: 14px; font-weight: 600; color: #f5a623; }
   .all-visits { font-size: 11px; color: #bbb; margin-top: 2px; }
   .no-review { font-size: 12px; color: #ddd; }
-
-  /* 전체목록 리뷰 박스 */
   .list-review-box {
-    background: #f0f6ff; border: 1px solid #c8ddf5;
-    border-radius: 12px; padding: 1.25rem 1.5rem;
-    margin: 8px 0 4px; display: none; text-align: left;
+    background: #f0f6ff; border: 1px solid #c8ddf5; border-radius: 12px;
+    padding: 1.25rem 1.5rem; margin: 8px 0 4px; display: none; text-align: left;
   }
   .list-review-box.show { display: block; }
+
+  /* 버전 바 */
+  .version-bar {
+    text-align: center; margin-top: 2rem;
+    padding-top: 1.25rem; border-top: 1px solid #f0f0ee;
+  }
+  .version-btn {
+    font-size: 12px; color: #bbb; background: none; border: none;
+    cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    transition: background .12s, color .12s;
+  }
+  .version-btn:hover { background: #f5f5f3; color: #888; }
+
+  /* 모달 */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center;
+    z-index: 999; padding: 1.5rem;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 1.75rem 1.5rem;
+    max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .modal-title { font-size: 16px; font-weight: 600; color: #111; }
+  .modal-close { background: none; border: none; font-size: 18px; color: #aaa; cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; transition: background .12s; }
+  .modal-close:hover { background: #f0f0ee; color: #555; }
+  .changelog { list-style: none; }
+  .changelog > li { padding: 14px 0; border-bottom: 1px solid #f0f0ee; }
+  .changelog > li:last-child { border-bottom: none; }
+  .cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cl-version { font-size: 12px; font-weight: 700; color: #fff; background: #185FA5; padding: 3px 10px; border-radius: 20px; }
+  .cl-title { font-size: 14px; font-weight: 600; color: #111; }
+  .cl-items { list-style: none; padding-left: 2px; }
+  .cl-items li { font-size: 13px; color: #666; line-height: 1.8; display: flex; gap: 6px; }
+  .cl-items li::before { content: "·"; color: #185FA5; font-weight: 700; flex-shrink: 0; }
 
   .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -171,10 +167,11 @@
 <body>
 <div class="container">
 
-  <!-- ══ 메인 페이지 ══ -->
+  <!-- 메인 페이지 -->
   <div class="page show" id="mainPage">
     <h1>판교 점심 뽑기</h1>
     <p class="subtitle">판교로 331 기준 도보 5분 내 맛집</p>
+    <p class="sync-bar" id="syncBar">데이터 불러오는 중...</p>
 
     <div class="result-card" id="card">
       <span class="placeholder">버튼을 눌러 오늘 점심을 골라보세요</span>
@@ -183,56 +180,130 @@
     <div class="review-box" id="reviewBox">
       <p class="review-label" id="reviewLabel">별점 &amp; 코멘트 남기기</p>
       <div class="stars" id="stars">
-        <span class="star" onclick="setStar(1)">★</span>
-        <span class="star" onclick="setStar(2)">★</span>
-        <span class="star" onclick="setStar(3)">★</span>
-        <span class="star" onclick="setStar(4)">★</span>
-        <span class="star" onclick="setStar(5)">★</span>
+        <span class="star" data-star="1">★</span>
+        <span class="star" data-star="2">★</span>
+        <span class="star" data-star="3">★</span>
+        <span class="star" data-star="4">★</span>
+        <span class="star" data-star="5">★</span>
       </div>
       <textarea class="comment-input" id="commentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
-      <button class="btn-save" onclick="saveReview()">저장</button>
+      <button class="btn-save" id="btnSaveMain">저장</button>
     </div>
 
     <p class="count" id="count"></p>
-    <button class="btn-pick" id="btn" onclick="pick()">오늘 점심 뽑기</button>
-    <button class="btn-list" onclick="goList()">전체 맛집 목록 보기</button>
+    <button class="btn-pick" id="btn">오늘 점심 뽑기</button>
+    <button class="btn-list" id="btnGoList">전체 맛집 목록 보기</button>
 
     <div class="history" id="historyWrap" style="display:none;">
       <p class="history-title">오늘 뽑은 기록 <span style="font-weight:400;color:#b0c4d8;font-size:11px;">· 눌러서 별점 남기기</span></p>
       <ul class="history-list" id="historyList"></ul>
     </div>
+
+    <div class="version-bar">
+      <button class="version-btn" id="btnVersion">v1.3 · 업데이트 내역</button>
+    </div>
   </div>
 
-  <!-- ══ 전체목록 페이지 ══ -->
+  <!-- 전체목록 페이지 -->
   <div class="page" id="listPage">
     <div class="list-header">
-      <button class="btn-back" onclick="goBack()">←</button>
+      <button class="btn-back" id="btnBack">←</button>
       <span class="list-title">전체 맛집 목록</span>
       <span class="list-count" id="listCount"></span>
     </div>
-
     <div class="filter-bar" id="filterBar"></div>
-
     <ul class="all-list" id="allList"></ul>
-
-    <!-- 전체목록 리뷰 박스 -->
     <div class="list-review-box" id="listReviewBox">
       <p class="review-label" id="listReviewLabel">별점 &amp; 코멘트</p>
       <div class="stars" id="listStars">
-        <span class="star" onclick="setListStar(1)">★</span>
-        <span class="star" onclick="setListStar(2)">★</span>
-        <span class="star" onclick="setListStar(3)">★</span>
-        <span class="star" onclick="setListStar(4)">★</span>
-        <span class="star" onclick="setListStar(5)">★</span>
+        <span class="star" data-star="1">★</span>
+        <span class="star" data-star="2">★</span>
+        <span class="star" data-star="3">★</span>
+        <span class="star" data-star="4">★</span>
+        <span class="star" data-star="5">★</span>
       </div>
       <textarea class="comment-input" id="listCommentInput" rows="2" placeholder="한 줄 코멘트 (선택)"></textarea>
-      <button class="btn-save" onclick="saveListReview()">저장</button>
+      <button class="btn-save" id="btnSaveList">저장</button>
+    </div>
+
+    <div class="version-bar">
+      <button class="version-btn" id="btnVersionList">v1.3 · 업데이트 내역</button>
     </div>
   </div>
 
 </div>
 
-<script>
+<!-- 업데이트 히스토리 모달 -->
+<div class="modal-overlay" id="changelogModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">업데이트 내역</span>
+      <button class="modal-close" id="btnModalClose">✕</button>
+    </div>
+    <ul class="changelog">
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.3</span>
+          <span class="cl-title">Firebase 공유 연동</span>
+        </div>
+        <ul class="cl-items">
+          <li>별점·코멘트 모든 기기에서 실시간 공유</li>
+          <li>팀원 별점 자동 누적 반영</li>
+        </ul>
+      </li>
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.2</span>
+          <span class="cl-title">전체 목록 보기</span>
+        </div>
+        <ul class="cl-items">
+          <li>전체 44개 식당 한눈에 확인</li>
+          <li>장르별 필터 제공 (한식·일식·중식 등)</li>
+          <li>목록에서 바로 별점·코멘트 입력 가능</li>
+        </ul>
+      </li>
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.1</span>
+          <span class="cl-title">별점 &amp; 코멘트</span>
+        </div>
+        <ul class="cl-items">
+          <li>뽑은 후 별점(1~5점) 및 한 줄 코멘트 입력</li>
+          <li>누적 평균 별점·방문 횟수 표시</li>
+          <li>오늘 기록 눌러서 별점 수정 가능</li>
+        </ul>
+      </li>
+      <li>
+        <div class="cl-header">
+          <span class="cl-version">v1.0</span>
+          <span class="cl-title">최초 출시</span>
+        </div>
+        <ul class="cl-items">
+          <li>판교로 331 도보 5분 내 맛집 랜덤 뽑기</li>
+          <li>오늘 뽑은 기록 표시</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAvHFiPuuTVuqy1FtooHmIWrJeKqW4lzeA",
+  authDomain: "pangyo-lunch.firebaseapp.com",
+  projectId: "pangyo-lunch",
+  storageBucket: "pangyo-lunch.firebasestorage.app",
+  messagingSenderId: "759999856124",
+  appId: "1:759999856124:web:44c076416ce33660f70679",
+  measurementId: "G-1WQKF5FP6P"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const restaurants = [
   {name:"도담",genre:"한식",loc:"바로 앞",desc:"갈비탕 맛집"},
   {name:"네코부루",genre:"일식",loc:"바로 앞",desc:"돈까스 맛집"},
@@ -279,271 +350,238 @@ const restaurants = [
   {name:"시올돈",genre:"일식",loc:"유스페이스1 지하 B113호",desc:"돈까스 맛집"},
 ];
 
-const REVIEW_KEY = 'pangyo_reviews';
-let reviews = {};
-try { reviews = JSON.parse(localStorage.getItem(REVIEW_KEY) || '{}'); } catch(e){}
-
 const today = new Date().toDateString();
 const DAY_KEY = 'pangyo_' + today;
 let history = [];
 try { history = JSON.parse(localStorage.getItem(DAY_KEY) || '[]'); } catch(e){}
 
+let reviews = {};
 let currentName = null;
 let currentHistoryIdx = null;
 let selectedStar = 0;
-
-// 전체목록 상태
 let listSelectedName = null;
 let listSelectedStar = 0;
 let activeFilter = '전체';
 
-updateCount();
-if(history.length) renderHistory();
+// ── Firebase 실시간 리스닝 ──
+onSnapshot(collection(db, 'reviews'), (snapshot) => {
+  snapshot.forEach(d => { reviews[d.id] = d.data(); });
+  setSyncBar('ok', '✓ 공유 데이터 연결됨');
+  updateCount();
+  if(history.length) renderHistory();
+  if(document.getElementById('listPage').classList.contains('show')) renderListPage();
+  const nameEl = document.getElementById('card').querySelector('.result-name');
+  if(nameEl) updateCardStats(nameEl.textContent);
+}, () => setSyncBar('err', '⚠ 오프라인 — 별점은 연결 후 저장됩니다'));
 
-/* ── 페이지 전환 ── */
-function goList(){
+function setSyncBar(type, msg){
+  const el = document.getElementById('syncBar');
+  el.textContent = msg; el.className = 'sync-bar ' + type;
+}
+async function saveToFirestore(name, star, comment){
+  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:''};
+  if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; }
+  if(comment) rv.lastComment = comment;
+  reviews[name] = rv;
+  try { await setDoc(doc(db, 'reviews', name), rv); }
+  catch(e){ setSyncBar('err', '⚠ 저장 실패 — 네트워크를 확인해주세요'); }
+}
+function updateCardStats(name){
+  const card = document.getElementById('card');
+  const nameEl = card.querySelector('.result-name');
+  if(!nameEl || nameEl.textContent !== name) return;
+  const rv = reviews[name];
+  const existing = card.querySelector('.result-stats');
+  const commentEl = card.querySelector('.result-last-comment');
+  if(!rv || rv.count === 0){ if(existing) existing.remove(); if(commentEl) commentEl.remove(); return; }
+  const html = `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">"${rv.lastComment}"</div>`:''}`;
+  if(existing){ if(commentEl) commentEl.remove(); existing.outerHTML = html; }
+  else { card.insertAdjacentHTML('beforeend', html); }
+}
+
+// ── 모달 ──
+function toggleModal(){
+  document.getElementById('changelogModal').classList.toggle('show');
+}
+document.getElementById('btnVersion').addEventListener('click', toggleModal);
+document.getElementById('btnVersionList').addEventListener('click', toggleModal);
+document.getElementById('btnModalClose').addEventListener('click', toggleModal);
+document.getElementById('changelogModal').addEventListener('click', (e) => {
+  if(e.target === document.getElementById('changelogModal')) toggleModal();
+});
+
+// ── 페이지 전환 ──
+document.getElementById('btnGoList').addEventListener('click', () => {
   document.getElementById('mainPage').classList.remove('show');
   document.getElementById('listPage').classList.add('show');
   renderListPage();
-}
-function goBack(){
+});
+document.getElementById('btnBack').addEventListener('click', () => {
   document.getElementById('listPage').classList.remove('show');
   document.getElementById('mainPage').classList.add('show');
   listSelectedName = null;
   document.getElementById('listReviewBox').classList.remove('show');
-}
+});
 
-/* ── 전체목록 렌더 ── */
+// ── 전체목록 ──
 function renderListPage(){
-  // 필터 버튼
   const genres = ['전체', ...new Set(restaurants.map(r => r.genre))];
   document.getElementById('filterBar').innerHTML = genres.map(g =>
-    `<button class="filter-btn ${g === activeFilter ? 'on' : ''}" onclick="setFilter('${g}')">${g}</button>`
+    `<button class="filter-btn ${g===activeFilter?'on':''}" data-genre="${g}">${g}</button>`
   ).join('');
-
-  const filtered = activeFilter === '전체' ? restaurants : restaurants.filter(r => r.genre === activeFilter);
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.genre;
+      listSelectedName = null;
+      document.getElementById('listReviewBox').classList.remove('show');
+      renderListPage();
+    });
+  });
+  const filtered = activeFilter==='전체' ? restaurants : restaurants.filter(r=>r.genre===activeFilter);
   document.getElementById('listCount').textContent = `${filtered.length}곳`;
-
   document.getElementById('allList').innerHTML = filtered.map(r => {
     const rv = reviews[r.name];
-    const statsHtml = rv && rv.count > 0
-      ? `<div class="all-avg">★ ${rv.avg.toFixed(1)}</div>
-         <div class="all-visits">${rv.count}회 방문</div>`
+    const stats = rv && rv.count > 0
+      ? `<div class="all-avg">★ ${rv.avg.toFixed(1)}</div><div class="all-visits">${rv.count}회 방문</div>`
       : `<div class="no-review">미방문</div>`;
-    const isActive = listSelectedName === r.name;
-    return `<li onclick="toggleListReview('${r.name}')" class="${isActive ? 'active' : ''}">
+    return `<li data-name="${r.name}" class="${listSelectedName===r.name?'active':''}">
       <div class="all-row">
-        <div>
-          <div class="all-name">${r.name}</div>
-          <div class="all-meta">${r.genre} · ${r.loc}</div>
-        </div>
-        <div class="all-stats">${statsHtml}</div>
+        <div><div class="all-name">${r.name}</div><div class="all-meta">${r.genre} · ${r.loc}</div></div>
+        <div class="all-stats">${stats}</div>
       </div>
     </li>`;
   }).join('');
+  document.querySelectorAll('.all-list li').forEach(li => {
+    li.addEventListener('click', () => toggleListReview(li.dataset.name));
+  });
 }
-
-function setFilter(g){
-  activeFilter = g;
-  listSelectedName = null;
-  document.getElementById('listReviewBox').classList.remove('show');
-  renderListPage();
-}
-
 function toggleListReview(name){
   const box = document.getElementById('listReviewBox');
-  if(listSelectedName === name && box.classList.contains('show')){
-    listSelectedName = null;
-    listSelectedStar = 0;
-    box.classList.remove('show');
-    renderListPage();
-    return;
+  if(listSelectedName===name && box.classList.contains('show')){
+    listSelectedName=null; listSelectedStar=0; box.classList.remove('show'); renderListPage(); return;
   }
-  listSelectedName = name;
-  listSelectedStar = 0;
+  listSelectedName=name; listSelectedStar=0;
   document.getElementById('listReviewLabel').textContent = `"${name}" 별점 & 코멘트`;
-  document.getElementById('listCommentInput').value = '';
-  renderListStars(0);
-  box.classList.add('show');
-  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+  document.getElementById('listCommentInput').value='';
+  renderListStars(0); box.classList.add('show');
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
   renderListPage();
 }
-
-function setListStar(n){
-  listSelectedStar = n;
-  renderListStars(n);
-}
+document.querySelectorAll('#listStars .star').forEach(s => {
+  s.addEventListener('click', () => { listSelectedStar=+s.dataset.star; renderListStars(listSelectedStar); });
+});
 function renderListStars(n){
-  document.querySelectorAll('#listStars .star').forEach((el,i) => el.classList.toggle('on', i < n));
+  document.querySelectorAll('#listStars .star').forEach((el,i) => el.classList.toggle('on', i<n));
 }
-
-function saveListReview(){
+document.getElementById('btnSaveList').addEventListener('click', async () => {
   if(!listSelectedName) return;
   const comment = document.getElementById('listCommentInput').value.trim();
-  const star = listSelectedStar;
-  if(star > 0 || comment){
-    const rv = reviews[listSelectedName] || {count:0, total:0, avg:0, lastComment:''};
-    if(star > 0){ rv.count += 1; rv.total += star; rv.avg = rv.total / rv.count; }
-    if(comment) rv.lastComment = comment;
-    reviews[listSelectedName] = rv;
-    try { localStorage.setItem(REVIEW_KEY, JSON.stringify(reviews)); } catch(e){}
-  }
-  listSelectedName = null;
-  listSelectedStar = 0;
+  if(listSelectedStar>0||comment) await saveToFirestore(listSelectedName, listSelectedStar, comment);
+  listSelectedName=null; listSelectedStar=0;
   document.getElementById('listReviewBox').classList.remove('show');
   renderListPage();
-}
+});
 
-/* ── 메인: 뽑기 ── */
-function pick(){
+// ── 메인: 뽑기 ──
+document.getElementById('btn').addEventListener('click', () => {
   const btn = document.getElementById('btn');
   const card = document.getElementById('card');
-  btn.disabled = true;
-  closeReview();
-  card.innerHTML = '<span class="spin">&#8635;</span>';
-
+  btn.disabled=true; closeReview();
+  card.innerHTML='<span class="spin">&#8635;</span>';
   setTimeout(()=>{
-    const used = history.map(h => h.name);
-    const available = restaurants.filter(r => !used.includes(r.name));
-    const pool = available.length > 0 ? available : restaurants;
-    const r = pool[Math.floor(Math.random() * pool.length)];
-
-    currentName = r.name;
-    currentHistoryIdx = 0;
-    selectedStar = 0;
-
-    const rv = reviews[r.name];
-    const statsHtml = rv && rv.count > 0
-      ? `<div class="result-stats">
-           <span>★ ${rv.avg.toFixed(1)}</span>
-           <span style="color:#ddd">|</span>
-           <span>${rv.count}회 방문</span>
-         </div>
-         ${rv.lastComment ? `<div class="result-last-comment">"${rv.lastComment}"</div>` : ''}`
+    const used = history.map(h=>h.name);
+    const pool = restaurants.filter(r=>!used.includes(r.name));
+    const r = (pool.length>0?pool:restaurants)[Math.floor(Math.random()*(pool.length>0?pool.length:restaurants.length))];
+    currentName=r.name; currentHistoryIdx=0; selectedStar=0;
+    const rv=reviews[r.name];
+    const stats = rv&&rv.count>0
+      ? `<div class="result-stats"><span>★ ${rv.avg.toFixed(1)}</span><span style="color:#ddd">|</span><span>${rv.count}회 방문</span></div>${rv.lastComment?`<div class="result-last-comment">"${rv.lastComment}"</div>`:''}`
       : '';
+    card.innerHTML=`<div class="result-name">${r.name}</div><div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div><div class="result-desc">${r.desc}</div>${stats}`;
+    const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    history.unshift({name:r.name,time:t,star:0,comment:''});
+    try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
+    updateCount(); renderHistory(); openReview(r.name,0); btn.disabled=false;
+  },600);
+});
 
-    card.innerHTML = `
-      <div class="result-name">${r.name}</div>
-      <div class="badges">
-        <span class="badge badge-genre">${r.genre}</span>
-        <span class="badge badge-loc">${r.loc}</span>
-      </div>
-      <div class="result-desc">${r.desc}</div>
-      ${statsHtml}
-    `;
+// ── 메인: 별점 ──
+document.querySelectorAll('#stars .star').forEach(s => {
+  s.addEventListener('click', () => { selectedStar=+s.dataset.star; renderStars(selectedStar); });
+});
+function renderStars(n){ document.querySelectorAll('#stars .star').forEach((el,i)=>el.classList.toggle('on',i<n)); }
 
-    const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    history.unshift({name: r.name, time: t, star: 0, comment: ''});
-    try { localStorage.setItem(DAY_KEY, JSON.stringify(history)); } catch(e){}
-    updateCount();
-    renderHistory();
-    openReview(r.name, 0);
-    btn.disabled = false;
-  }, 600);
-}
-
-/* ── 메인: 리뷰 ── */
 function openReview(name, histIdx){
-  currentName = name;
-  currentHistoryIdx = histIdx;
-  const h = history[histIdx] || {};
-  selectedStar = h.star || 0;
-  document.getElementById('commentInput').value = h.comment || '';
-  document.getElementById('reviewLabel').textContent = `"${name}" 별점 & 코멘트`;
+  currentName=name; currentHistoryIdx=histIdx;
+  const h=history[histIdx]||{};
+  selectedStar=h.star||0;
+  document.getElementById('commentInput').value=h.comment||'';
+  document.getElementById('reviewLabel').textContent=`"${name}" 별점 & 코멘트`;
   renderStars(selectedStar);
   document.getElementById('reviewBox').classList.add('show');
   renderHistory();
 }
 function closeReview(){
-  currentName = null;
-  currentHistoryIdx = null;
-  selectedStar = 0;
+  currentName=null; currentHistoryIdx=null; selectedStar=0;
   document.getElementById('reviewBox').classList.remove('show');
   renderHistory();
 }
-function openReviewFromHistory(idx){
-  if(currentHistoryIdx === idx && document.getElementById('reviewBox').classList.contains('show')){
-    closeReview(); return;
-  }
-  const h = history[idx];
-  if(!h) return;
-  openReview(h.name, idx);
-  document.getElementById('reviewBox').scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-function setStar(n){ selectedStar = n; renderStars(n); }
-function renderStars(n){
-  document.querySelectorAll('#stars .star').forEach((el,i) => el.classList.toggle('on', i < n));
-}
-function saveReview(){
-  if(!currentName) return;
-  const comment = document.getElementById('commentInput').value.trim();
-  const star = selectedStar;
-  if(star > 0 || comment){
-    const rv = reviews[currentName] || {count:0, total:0, avg:0, lastComment:''};
-    if(star > 0){
-      const prevStar = (history[currentHistoryIdx] || {}).star || 0;
-      if(prevStar > 0 && rv.count > 0){ rv.total -= prevStar; rv.count -= 1; }
-      rv.count += 1; rv.total += star; rv.avg = rv.total / rv.count;
-    }
-    if(comment) rv.lastComment = comment;
-    reviews[currentName] = rv;
-    try { localStorage.setItem(REVIEW_KEY, JSON.stringify(reviews)); } catch(e){}
 
-    const card = document.getElementById('card');
-    const nameEl = card.querySelector('.result-name');
-    if(nameEl && nameEl.textContent === currentName){
-      const rv2 = reviews[currentName];
-      const existing = card.querySelector('.result-stats');
-      const newHtml = `<div class="result-stats">
-        <span>★ ${rv2.avg.toFixed(1)}</span>
-        <span style="color:#ddd">|</span>
-        <span>${rv2.count}회 방문</span>
-      </div>${rv2.lastComment ? `<div class="result-last-comment">"${rv2.lastComment}"</div>` : ''}`;
-      if(existing){
-        const next = existing.nextElementSibling;
-        if(next && next.classList.contains('result-last-comment')) next.remove();
-        existing.outerHTML = newHtml;
-      } else {
-        card.insertAdjacentHTML('beforeend', newHtml);
-      }
-    }
+document.getElementById('btnSaveMain').addEventListener('click', async () => {
+  if(!currentName) return;
+  const comment=document.getElementById('commentInput').value.trim();
+  const star=selectedStar;
+  if(star>0||comment){
+    const prevStar=(history[currentHistoryIdx]||{}).star||0;
+    const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:''};
+    if(prevStar>0&&rv.count>0){ rv.total-=prevStar; rv.count--; }
+    await saveToFirestore(currentName, star, comment);
   }
   if(history[currentHistoryIdx]){
-    if(star > 0) history[currentHistoryIdx].star = star;
-    if(comment) history[currentHistoryIdx].comment = comment;
-    try { localStorage.setItem(DAY_KEY, JSON.stringify(history)); } catch(e){}
+    if(star>0) history[currentHistoryIdx].star=star;
+    if(comment) history[currentHistoryIdx].comment=comment;
+    try{localStorage.setItem(DAY_KEY,JSON.stringify(history));}catch(e){}
   }
   closeReview();
-}
+});
+
+// ── 히스토리 클릭 ──
+document.getElementById('historyList').addEventListener('click', (e) => {
+  const li = e.target.closest('li');
+  if(!li) return;
+  const idx = +li.dataset.idx;
+  if(currentHistoryIdx===idx && document.getElementById('reviewBox').classList.contains('show')){ closeReview(); return; }
+  const h=history[idx]; if(!h) return;
+  openReview(h.name, idx);
+  document.getElementById('reviewBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
 
 function updateCount(){
-  const used = history.length;
-  const total = restaurants.length;
-  const el = document.getElementById('count');
-  if(used > 0) el.textContent = `오늘 ${used}곳 뽑음 · 남은 곳 ${Math.max(0, total - used)}곳`;
+  const el=document.getElementById('count');
+  if(history.length) el.textContent=`오늘 ${history.length}곳 뽑음 · 남은 곳 ${Math.max(0,restaurants.length-history.length)}곳`;
 }
 function renderHistory(){
-  const wrap = document.getElementById('historyWrap');
-  const list = document.getElementById('historyList');
+  const wrap=document.getElementById('historyWrap'), list=document.getElementById('historyList');
   if(!history.length){ wrap.style.display='none'; return; }
-  wrap.style.display = 'block';
-  list.innerHTML = history.slice(0,5).map((h,i) => {
-    const starStr = h.star ? '★'.repeat(h.star)+'☆'.repeat(5-h.star) : '';
-    const commentStr = h.comment ? `<div class="history-comment">"${h.comment}"</div>` : '';
-    const isActive = currentHistoryIdx === i && document.getElementById('reviewBox').classList.contains('show');
-    const hint = !h.star ? `<span class="edit-hint">+ 별점</span>` : '';
-    return `<li onclick="openReviewFromHistory(${i})" class="${isActive?'active':''}">
+  wrap.style.display='block';
+  list.innerHTML=history.slice(0,5).map((h,i)=>{
+    const starStr=h.star?'★'.repeat(h.star)+'☆'.repeat(5-h.star):'';
+    const commentStr=h.comment?`<div class="history-comment">"${h.comment}"</div>`:'';
+    const isActive=currentHistoryIdx===i&&document.getElementById('reviewBox').classList.contains('show');
+    return `<li data-idx="${i}" class="${isActive?'active':''}">
       <div class="history-row">
         <span class="history-name">${h.name}</span>
         <div class="history-right">
-          ${starStr ? `<span class="history-stars">${starStr}</span>` : hint}
+          ${starStr?`<span class="history-stars">${starStr}</span>`:`<span class="edit-hint">+ 별점</span>`}
           <span class="history-time">${h.time}</span>
         </div>
-      </div>
-      ${commentStr}
-    </li>`;
+      </div>${commentStr}</li>`;
   }).join('');
 }
+
+updateCount();
+if(history.length) renderHistory();
+
 </script>
 </body>
 </html>
