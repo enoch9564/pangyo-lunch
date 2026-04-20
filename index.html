@@ -309,6 +309,26 @@ body {
 
 .spin { display: inline-block; font-size: 28px; animation: spin .5s linear infinite; }
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* ── 리뷰 피드 페이지 ── */
+.review-feed-filter {
+  display: flex; gap: 6px; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 4px;
+}
+.review-feed-filter::-webkit-scrollbar { display: none; }
+.review-feed-empty { text-align: center; color: #bbb; font-size: 14px; padding: 3rem 0; line-height: 2; }
+.feed-card {
+  background: #fff; border: 1px solid #eef0f5; border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  transition: background .12s;
+}
+.feed-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.feed-restaurant { font-size: 14px; font-weight: 700; color: #111; }
+.feed-stars { color: #f5a623; font-size: 13px; letter-spacing: -1px; }
+.feed-comment { font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 6px; font-style: italic; }
+.feed-meta { font-size: 11px; color: #bbb; display: flex; gap: 8px; align-items: center; }
+.feed-nickname { font-weight: 600; color: #888; }
+.feed-badge-genre { font-size: 10px; background: #EEEDFE; color: #3C3489; padding: 2px 7px; border-radius: 10px; }
+.feed-no-comment { color: #ccc; font-style: italic; }
 </style>
 </head>
 <body>
@@ -320,7 +340,7 @@ body {
       <h1>판교 점심 뽑기 🎲</h1>
       <div class="sub">판교로 331 기준 도보 5분 내</div>
     </div>
-    <button class="btn-changelog" id="btnChangelog">v1.7</button>
+    <button class="btn-changelog" id="btnChangelog">v1.8</button>
   </div>
 
   <div class="pages">
@@ -414,6 +434,15 @@ body {
       </div>
     </div>
 
+    <!-- ④ 리뷰 피드 페이지 -->
+    <div class="page" id="reviewFeedPage">
+      <div class="page-header">
+        <span class="page-title">팀 리뷰 모아보기 💬</span>
+      </div>
+      <div class="review-feed-filter filter-bar" id="reviewFeedFilter"></div>
+      <div id="reviewFeedList"></div>
+    </div>
+
     <!-- ③ 랭킹 페이지 -->
     <div class="page" id="rankPage">
       <div class="page-header">
@@ -438,6 +467,10 @@ body {
       <span class="tab-icon">🍽️</span>
       <span class="tab-label">전체목록</span>
     </button>
+    <button class="tab" data-page="reviewFeedPage">
+      <span class="tab-icon">💬</span>
+      <span class="tab-label">리뷰</span>
+    </button>
     <button class="tab" data-page="rankPage">
       <span class="tab-icon">🏆</span>
       <span class="tab-label">랭킹</span>
@@ -452,6 +485,15 @@ body {
     <div class="modal-handle"></div>
     <div class="modal-title">업데이트 내역</div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header"><span class="cl-version">v1.8</span><span class="cl-title">팀 리뷰 모아보기</span></div>
+        <ul class="cl-items">
+          <li>💬 리뷰 탭 추가 — 팀원들이 남긴 코멘트 피드</li>
+          <li>장르별 필터 지원</li>
+          <li>앞으로 남기는 리뷰는 개별 저장 (누적)</li>
+          <li>기존 리뷰도 마지막 코멘트로 보완 표시</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header"><span class="cl-version">v1.7</span><span class="cl-title">UI 전면 개편</span></div>
         <ul class="cl-items">
@@ -496,7 +538,7 @@ body {
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, addDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvHFiPuuTVuqy1FtooHmIWrJeKqW4lzeA",
@@ -656,6 +698,8 @@ try { history = JSON.parse(localStorage.getItem(DAY_KEY) || '[]'); } catch(e){}
 
 let reviews = {};
 let monthlyReviews = {};
+let allComments = []; // 전체 코멘트 피드
+let reviewFeedFilter = '전체';
 let currentName = null;
 let currentHistoryIdx = null;
 let selectedStar = 0;
@@ -682,6 +726,12 @@ onSnapshot(collection(db, 'monthly'), (snapshot) => {
   if(document.getElementById('rankPage').classList.contains('show')) renderRankPage();
 });
 
+// comments 컬렉션 리스닝 (최신 100개)
+onSnapshot(query(collection(db, 'comments'), orderBy('ts', 'desc'), limit(100)), (snapshot) => {
+  allComments = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+  if(document.getElementById('reviewFeedPage').classList.contains('show')) renderReviewFeedPage();
+});
+
 // ── Firebase 저장 ──
 async function saveToFirestore(name, star, comment, nickname=''){
   const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastNickname:'', lastVisit:0};
@@ -691,6 +741,14 @@ async function saveToFirestore(name, star, comment, nickname=''){
   reviews[name] = rv;
   try {
     await setDoc(doc(db, 'reviews', name), rv);
+    // 개별 코멘트 저장 (리뷰 피드용)
+    if(comment || star > 0){
+      const r = restaurants.find(r => r.name === name);
+      await addDoc(collection(db, 'comments'), {
+        name, star: star||0, comment: comment||'', nickname: nickname||'',
+        genre: r ? r.genre : '', ts: Date.now()
+      });
+    }
     if(star > 0){
       const now = new Date();
       const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -716,6 +774,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     closeReview();
     if(pageId === 'listPage') renderListPage();
     if(pageId === 'rankPage'){ initRankSelectors(); renderRankPage(); }
+    if(pageId === 'reviewFeedPage') renderReviewFeedPage();
   });
 });
 
@@ -996,6 +1055,76 @@ document.getElementById('btnSaveList').addEventListener('click', async ()=>{
   document.getElementById('listReviewBox').classList.remove('show');
   renderListPage();
 });
+
+// ── 리뷰 피드 ──
+function renderReviewFeedPage(){
+  const genres = ['전체', ...new Set(restaurants.map(r=>r.genre))];
+  document.getElementById('reviewFeedFilter').innerHTML = genres.map(g=>
+    `<button class="filter-btn ${g===reviewFeedFilter?'on':''}" data-genre="${g}">${g}</button>`
+  ).join('');
+  document.querySelectorAll('#reviewFeedFilter .filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ reviewFeedFilter=btn.dataset.genre; renderReviewFeedPage(); });
+  });
+
+  // 1) 새로 쌓인 comments 컬렉션 데이터
+  let feedItems = allComments
+    .filter(c => reviewFeedFilter==='전체' || c.genre===reviewFeedFilter)
+    .map(c => ({...c, _source:'new'}));
+
+  // 2) 기존 reviews 컬렉션의 lastComment (comments에 없는 맛집만 보완)
+  const newNames = new Set(allComments.map(c=>c.name));
+  const legacyItems = Object.entries(reviews)
+    .filter(([name, rv]) => !newNames.has(name) && rv.lastComment)
+    .filter(([name]) => {
+      if(reviewFeedFilter==='전체') return true;
+      const r = restaurants.find(r=>r.name===name);
+      return r && r.genre===reviewFeedFilter;
+    })
+    .map(([name, rv]) => ({
+      name, star: rv.avg ? Math.round(rv.avg) : 0,
+      comment: rv.lastComment, nickname: rv.lastNickname||'',
+      genre: (restaurants.find(r=>r.name===name)||{}).genre||'',
+      ts: rv.lastVisit||0, _source:'legacy'
+    }));
+
+  const all = [...feedItems, ...legacyItems].sort((a,b)=>b.ts-a.ts);
+
+  const list = document.getElementById('reviewFeedList');
+  if(!all.length){
+    list.innerHTML = `<div class="review-feed-empty">아직 리뷰가 없어요 🍽️<br><span style="font-size:12px">별점이나 코멘트를 남기면 여기에 쌓여요</span></div>`;
+    return;
+  }
+
+  list.innerHTML = all.map(c=>{
+    const starStr = c.star>0 ? '★'.repeat(c.star)+'☆'.repeat(5-c.star) : '';
+    const timeStr = c.ts ? timeAgo(c.ts) : '';
+    const commentHtml = c.comment
+      ? `<div class="feed-comment">"${c.comment}"</div>`
+      : `<div class="feed-comment feed-no-comment">코멘트 없음</div>`;
+    const nicknameHtml = c.nickname ? `<span class="feed-nickname">${c.nickname}</span>` : `<span class="feed-nickname" style="color:#ccc">익명</span>`;
+    const genreHtml = c.genre ? `<span class="feed-badge-genre">${c.genre}</span>` : '';
+    return `<div class="feed-card">
+      <div class="feed-card-top">
+        <span class="feed-restaurant">${c.name}</span>
+        <span class="feed-stars">${starStr||'<span style="color:#ddd;font-size:11px">별점없음</span>'}</span>
+      </div>
+      ${commentHtml}
+      <div class="feed-meta">${nicknameHtml}${genreHtml}<span>${timeStr}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function timeAgo(ts){
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  const h = Math.floor(diff/3600000);
+  const d = Math.floor(diff/86400000);
+  if(m<1) return '방금';
+  if(m<60) return `${m}분 전`;
+  if(h<24) return `${h}시간 전`;
+  if(d<7) return `${d}일 전`;
+  return new Date(ts).toLocaleDateString('ko-KR',{month:'short',day:'numeric'});
+}
 
 // ── 랭킹 ──
 function initRankSelectors(){
