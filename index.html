@@ -334,6 +334,18 @@ body {
 .inline-no-review { font-size: 12px; color: #bbb; text-align: center; padding: 10px 0 6px; }
 .inline-divider { border: none; border-top: 1px dashed #dce6f5; margin: 12px 0; }
 .inline-write-title { font-size: 11px; font-weight: 700; color: #185FA5; letter-spacing: .04em; margin-bottom: 10px; }
+.inline-pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #eef0f5;
+}
+.inline-page-btn {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px;
+  border: 1.5px solid #dce6f5; background: #fff; color: #555;
+  cursor: pointer; transition: all .12s;
+}
+.inline-page-btn:hover { background: #eef4ff; border-color: #185FA5; color: #185FA5; }
+.inline-page-btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+.inline-page-info { font-size: 12px; color: #aaa; }
 
 /* ── 전체목록 인라인 리뷰 피드 ── */
 .review-feed-filter { display: flex; gap: 6px; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 4px; }
@@ -712,6 +724,8 @@ let currentHistoryIdx = null;
 let selectedStar = 0;
 let listSelectedName = null;
 let listSelectedStar = 0;
+let listReviewPage = {}; // { [맛집이름]: 현재 페이지(0-based) }
+const REVIEWS_PER_PAGE = 5;
 let activeFilter = '전체';
 let filterRecent = false;
 
@@ -1041,10 +1055,14 @@ function renderListPage(){
       : `<div class="no-review">미방문</div>`;
     const isOpen = listSelectedName === r.name;
 
-    // 기존 리뷰 목록
+    // 기존 리뷰 목록 (페이지네이션)
     const rviews = getRestaurantReviews(r.name);
+    const currentPage = listReviewPage[r.name] || 0;
+    const totalPages = Math.ceil(rviews.length / REVIEWS_PER_PAGE);
+    const pageSlice = rviews.slice(currentPage * REVIEWS_PER_PAGE, (currentPage + 1) * REVIEWS_PER_PAGE);
+
     const reviewsHtml = rviews.length
-      ? rviews.map(c => {
+      ? pageSlice.map(c => {
           const starStr = c.star>0 ? '★'.repeat(c.star)+'☆'.repeat(5-c.star) : '';
           return `<div class="inline-review-item">
             <div class="inline-review-top">
@@ -1055,6 +1073,12 @@ function renderListPage(){
             <div class="inline-review-time">${c.ts ? timeAgo(c.ts) : ''}</div>
           </div>`;
         }).join('')
+        + (totalPages > 1 ? `
+          <div class="inline-pagination">
+            <button class="inline-page-btn" data-page-name="${r.name}" data-page-dir="-1" ${currentPage===0?'disabled':''}>← 이전</button>
+            <span class="inline-page-info">${currentPage+1} / ${totalPages}</span>
+            <button class="inline-page-btn" data-page-name="${r.name}" data-page-dir="1" ${currentPage>=totalPages-1?'disabled':''}>다음 →</button>
+          </div>` : '')
       : `<div class="inline-no-review">아직 리뷰가 없어요</div>`;
 
     const panelHtml = isOpen ? `
@@ -1103,6 +1127,24 @@ function renderListPage(){
     });
   });
 
+  // 페이지네이션 버튼
+  document.querySelectorAll('.inline-page-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const name = btn.dataset.pageName;
+      const dir = +btn.dataset.pageDir;
+      const rviews = getRestaurantReviews(name);
+      const totalPages = Math.ceil(rviews.length / REVIEWS_PER_PAGE);
+      const cur = listReviewPage[name] || 0;
+      listReviewPage[name] = Math.max(0, Math.min(totalPages-1, cur + dir));
+      renderListPage();
+      setTimeout(()=>{
+        const panel = document.querySelector(`.inline-panel[data-name="${name}"]`);
+        if(panel) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }, 50);
+    });
+  });
+
   // 인라인 별점
   document.querySelectorAll('.inline-stars .star').forEach(s=>{
     s.addEventListener('click', (e)=>{
@@ -1121,6 +1163,7 @@ function renderListPage(){
       const comment = panel.querySelector('.inline-comment').value.trim();
       const nickname = panel.querySelector('.inline-nickname').value.trim();
       if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName, listSelectedStar, comment, nickname);
+      listReviewPage[listSelectedName] = 0;
       listSelectedName = null; listSelectedStar = 0;
       renderListPage();
     });
