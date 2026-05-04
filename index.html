@@ -94,6 +94,13 @@ body {
   font-family: inherit; background: #fff; outline: none;
 }
 .nickname-input:focus { border-color: #185FA5; }
+.visit-date-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.visit-date-input {
+  flex: 1; border: 1px solid #dce6f5; border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; color: #333;
+  font-family: inherit; background: #fff; outline: none;
+}
+.visit-date-input:focus { border-color: #185FA5; }
 .stars { display: flex; gap: 4px; margin-bottom: 10px; }
 .star { font-size: 28px; cursor: pointer; color: #e0e0e0; transition: color .1s, transform .1s; line-height: 1; }
 .star.on { color: #f5a623; }
@@ -390,7 +397,7 @@ body {
       <h1>판교 점심 뽑기 🎲</h1>
       <div class="sub">판교로 331 기준 도보 5분 내</div>
     </div>
-    <button class="btn-changelog" id="btnChangelog">v1.9</button>
+    <button class="btn-changelog" id="btnChangelog">v2.0</button>
   </div>
 
   <div class="pages">
@@ -413,6 +420,10 @@ body {
         <div class="nickname-wrap">
           <span class="nickname-label">닉네임</span>
           <input class="nickname-input" id="yesterdayNicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+        </div>
+        <div class="visit-date-wrap">
+          <span class="nickname-label">방문날짜</span>
+          <input class="visit-date-input" id="yesterdayVisitDateInput" type="date">
         </div>
         <div class="stars" id="yesterdayStars">
           <span class="star" data-star="1">★</span>
@@ -450,6 +461,10 @@ body {
         <div class="nickname-wrap">
           <span class="nickname-label">닉네임</span>
           <input class="nickname-input" id="nicknameInput" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+        </div>
+        <div class="visit-date-wrap">
+          <span class="nickname-label">방문날짜</span>
+          <input class="visit-date-input" id="visitDateInput" type="date">
         </div>
         <div class="stars" id="stars">
           <span class="star" data-star="1">★</span>
@@ -545,6 +560,14 @@ body {
     <div class="modal-handle"></div>
     <div class="modal-title">업데이트 내역</div>
     <ul class="changelog">
+      <li>
+        <div class="cl-header"><span class="cl-version">v2.0</span><span class="cl-title">방문날짜·꽝 기준 개선</span></div>
+        <ul class="cl-items">
+          <li>어제 간 집은 어제 마지막으로 뽑은 1곳만 표시</li>
+          <li>이번 주 꽝은 평균 별점 3.0 이하인 집만 표시</li>
+          <li>리뷰 작성 시 방문날짜 선택 가능, 기본값은 오늘로 설정</li>
+        </ul>
+      </li>
       <li>
         <div class="cl-header"><span class="cl-version">v1.9</span><span class="cl-title">어제 간 집 리뷰</span></div>
         <ul class="cl-items">
@@ -757,6 +780,36 @@ function getIllust(desc) {
   return key && foodIllust[key] ? foodIllust[key] : null;
 }
 
+function formatDateInput(date){
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+function getTodayInputValue(){ return formatDateInput(new Date()); }
+function normalizeVisitDate(value){
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : getTodayInputValue();
+}
+function visitDateToTimestamp(value){
+  const safe = normalizeVisitDate(value);
+  return new Date(`${safe}T12:00:00`).getTime();
+}
+function timestampToDateInputValue(ts){
+  if(!ts) return '';
+  const date = new Date(ts);
+  return Number.isNaN(date.getTime()) ? '' : formatDateInput(date);
+}
+function formatVisitDate(value){
+  const safe = normalizeVisitDate(value);
+  const [y, m, d] = safe.split('-');
+  return `${y}.${m}.${d}`;
+}
+function reviewMetaText(c){
+  const visitDate = c.visitDate || (c.visitTs ? timestampToDateInputValue(c.visitTs) : '');
+  const parts = [];
+  if(visitDate) parts.push(`방문 ${formatVisitDate(visitDate)}`);
+  if(c.ts) parts.push(timeAgo(c.ts));
+  return parts.join(' · ');
+}
+
 
 // ── 상태 ──
 const today = new Date().toDateString();
@@ -768,7 +821,9 @@ const _yd = new Date(); _yd.setDate(_yd.getDate() - 1);
 const YESTERDAY_KEY = 'pangyo_' + _yd.toDateString();
 let yesterdayHistory = [];
 try { yesterdayHistory = JSON.parse(localStorage.getItem(YESTERDAY_KEY) || '[]'); } catch(e){}
-const yesterdayNames = [...new Set(yesterdayHistory.map(h => h.name))];
+// history는 unshift로 저장되므로 0번째 기록이 어제 마지막으로 뽑은 집입니다.
+const lastYesterdayHistory = yesterdayHistory.find(h => h && h.name);
+const yesterdayNames = lastYesterdayHistory ? [lastYesterdayHistory.name] : [];
 
 let selectedYesterdayName = null;
 let selectedYesterdayStar = 0;
@@ -818,12 +873,24 @@ onSnapshot(query(collection(db, 'comments'), orderBy('ts', 'desc'), limit(100)),
 });
 
 // ── Firebase 저장 ──
-async function saveToFirestore(name, star, comment, nickname=''){
-  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastNickname:'', lastVisit:0};
-  if(star > 0){ rv.count++; rv.total += star; rv.avg = rv.total / rv.count; rv.lastVisit = Date.now(); }
+async function saveToFirestore(name, star, comment, nickname='', visitDateInput=''){
+  const visitDate = normalizeVisitDate(visitDateInput);
+  const visitTs = visitDateToTimestamp(visitDate);
+  const createdAt = Date.now();
+  const rv = reviews[name] || {count:0, total:0, avg:0, lastComment:'', lastNickname:'', lastVisit:0, lastVisitDate:''};
+
+  if(star > 0){
+    rv.count++;
+    rv.total += star;
+    rv.avg = rv.total / rv.count;
+    rv.lastVisit = visitTs;
+    rv.lastVisitDate = visitDate;
+  }
+  rv.lastReviewAt = createdAt;
   if(comment) rv.lastComment = comment;
   if(nickname) rv.lastNickname = nickname;
   reviews[name] = rv;
+
   try {
     await setDoc(doc(db, 'reviews', name), rv);
     // 개별 코멘트 저장 (리뷰 피드용)
@@ -831,12 +898,12 @@ async function saveToFirestore(name, star, comment, nickname=''){
       const r = restaurants.find(r => r.name === name);
       await addDoc(collection(db, 'comments'), {
         name, star: star||0, comment: comment||'', nickname: nickname||'',
-        genre: r ? r.genre : '', ts: Date.now()
+        genre: r ? r.genre : '', ts: createdAt, visitDate, visitTs
       });
     }
     if(star > 0){
-      const now = new Date();
-      const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const visit = new Date(`${visitDate}T12:00:00`);
+      const monthKey = `${visit.getFullYear()}-${String(visit.getMonth()+1).padStart(2,'0')}`;
       const monthDocId = `${monthKey}__${name}`;
       const mr = monthlyReviews[monthDocId] || {name, month:monthKey, count:0, total:0, avg:0};
       mr.count++; mr.total += star; mr.avg = mr.total / mr.count;
@@ -892,8 +959,11 @@ function renderBestWorst(){
   document.getElementById('bestStats').textContent = `★ ${brv.avg.toFixed(1)} · ${brv.count}회`;
   bestCard.classList.add('show');
 
-  if(candidates.length >= 2){
-    const [wn, wrv] = candidates[candidates.length-1];
+  const worstCandidates = candidates
+    .filter(([_, rv]) => rv.avg <= 3)
+    .sort((a,b) => a[1].avg - b[1].avg || b[1].count - a[1].count);
+  if(worstCandidates.length){
+    const [wn, wrv] = worstCandidates[0];
     document.getElementById('worstName').textContent = wn;
     document.getElementById('worstStats').textContent = `★ ${wrv.avg.toFixed(1)} · ${wrv.count}회`;
     worstCard.classList.add('show');
@@ -1002,7 +1072,7 @@ document.getElementById('btn').addEventListener('click', () => {
       <div class="badges"><span class="badge badge-genre">${r.genre}</span><span class="badge badge-loc">${r.loc}</span></div>
       <div class="result-desc">${r.desc}</div>${stats}`;
     const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    history.unshift({name:r.name, time:t, star:0, comment:''});
+    history.unshift({name:r.name, time:t, star:0, comment:'', visitDate:getTodayInputValue()});
     try{ localStorage.setItem(DAY_KEY, JSON.stringify(history)); }catch(e){}
     renderHistory();
     openReview(r.name, 0);
@@ -1022,6 +1092,7 @@ function openReview(name, histIdx){
   selectedStar=h.star||0;
   document.getElementById('commentInput').value=h.comment||'';
   document.getElementById('nicknameInput').value='';
+  document.getElementById('visitDateInput').value=h.visitDate||getTodayInputValue();
   document.getElementById('reviewLabel').textContent=`"${name}" 별점 & 코멘트`;
   renderStars(selectedStar);
   document.getElementById('reviewBox').classList.add('show');
@@ -1037,16 +1108,18 @@ document.getElementById('btnSaveMain').addEventListener('click', async () => {
   if(!currentName) return;
   const comment = document.getElementById('commentInput').value.trim();
   const nickname = document.getElementById('nicknameInput').value.trim();
+  const visitDate = normalizeVisitDate(document.getElementById('visitDateInput').value);
   const star = selectedStar;
   if(star>0||comment||nickname){
     const prevStar=(history[currentHistoryIdx]||{}).star||0;
-    const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:'',lastNickname:''};
-    if(prevStar>0&&rv.count>0){ rv.total-=prevStar; rv.count--; }
-    await saveToFirestore(currentName, star, comment, nickname);
+    const rv=reviews[currentName]||{count:0,total:0,avg:0,lastComment:'',lastNickname:'',lastVisit:0,lastVisitDate:''};
+    if(prevStar>0&&rv.count>0){ rv.total-=prevStar; rv.count--; rv.avg=rv.count>0?rv.total/rv.count:0; }
+    await saveToFirestore(currentName, star, comment, nickname, visitDate);
   }
   if(history[currentHistoryIdx]){
     if(star>0) history[currentHistoryIdx].star=star;
     if(comment) history[currentHistoryIdx].comment=comment;
+    history[currentHistoryIdx].visitDate=visitDate;
     try{ localStorage.setItem(DAY_KEY, JSON.stringify(history)); }catch(e){}
   }
   closeReview();
@@ -1086,11 +1159,14 @@ function renderHistory(){
 // ── 전체목록 ──
 function getRestaurantReviews(name){
   // comments 컬렉션에서 해당 맛집 리뷰
-  const fromComments = allComments.filter(c => c.name === name);
+  const fromComments = allComments
+    .filter(c => c.name === name)
+    .map(c => ({...c, visitDate: c.visitDate || (c.visitTs ? timestampToDateInputValue(c.visitTs) : '')}));
   // 기존 lastComment (comments에 없을 때만 보완)
   const rv = reviews[name];
+  const legacyVisitDate = rv ? (rv.lastVisitDate || timestampToDateInputValue(rv.lastVisit)) : '';
   const legacy = (!fromComments.length && rv && rv.lastComment)
-    ? [{ name, star: rv.avg ? Math.round(rv.avg) : 0, comment: rv.lastComment, nickname: rv.lastNickname||'', ts: rv.lastVisit||0, _legacy: true }]
+    ? [{ name, star: rv.avg ? Math.round(rv.avg) : 0, comment: rv.lastComment, nickname: rv.lastNickname||'', ts: rv.lastReviewAt||rv.lastVisit||0, visitDate: legacyVisitDate, visitTs: rv.lastVisit||0, _legacy: true }]
     : [];
   return [...fromComments, ...legacy].sort((a,b) => b.ts - a.ts);
 }
@@ -1134,7 +1210,7 @@ function renderListPage(){
               <span class="inline-review-stars">${starStr}</span>
             </div>
             ${c.comment ? `<div class="inline-review-comment">"${c.comment}"</div>` : ''}
-            <div class="inline-review-time">${c.ts ? timeAgo(c.ts) : ''}</div>
+            <div class="inline-review-time">${reviewMetaText(c)}</div>
           </div>`;
         }).join('')
         + (totalPages > 1 ? `
@@ -1156,6 +1232,10 @@ function renderListPage(){
         <div class="nickname-wrap">
           <span class="nickname-label">닉네임</span>
           <input class="nickname-input inline-nickname" type="text" placeholder="이름 입력 (선택)" maxlength="10">
+        </div>
+        <div class="visit-date-wrap">
+          <span class="nickname-label">방문날짜</span>
+          <input class="visit-date-input inline-visit-date" type="date" value="${getTodayInputValue()}">
         </div>
         <div class="stars inline-stars">
           <span class="star" data-star="1">★</span>
@@ -1226,7 +1306,8 @@ function renderListPage(){
       const panel = btn.closest('.inline-panel');
       const comment = panel.querySelector('.inline-comment').value.trim();
       const nickname = panel.querySelector('.inline-nickname').value.trim();
-      if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName, listSelectedStar, comment, nickname);
+      const visitDate = normalizeVisitDate(panel.querySelector('.inline-visit-date').value);
+      if(listSelectedStar>0||comment||nickname) await saveToFirestore(listSelectedName, listSelectedStar, comment, nickname, visitDate);
       listReviewPage[listSelectedName] = 0;
       listSelectedName = null; listSelectedStar = 0;
       renderListPage();
@@ -1255,7 +1336,7 @@ function renderReviewFeedPage(){
   // 1) 새로 쌓인 comments 컬렉션 데이터
   let feedItems = allComments
     .filter(c => reviewFeedFilter==='전체' || c.genre===reviewFeedFilter)
-    .map(c => ({...c, _source:'new'}));
+    .map(c => ({...c, visitDate: c.visitDate || (c.visitTs ? timestampToDateInputValue(c.visitTs) : ''), _source:'new'}));
 
   // 2) 기존 reviews 컬렉션의 lastComment (comments에 없는 맛집만 보완)
   const newNames = new Set(allComments.map(c=>c.name));
@@ -1270,7 +1351,9 @@ function renderReviewFeedPage(){
       name, star: rv.avg ? Math.round(rv.avg) : 0,
       comment: rv.lastComment, nickname: rv.lastNickname||'',
       genre: (restaurants.find(r=>r.name===name)||{}).genre||'',
-      ts: rv.lastVisit||0, _source:'legacy'
+      ts: rv.lastReviewAt||rv.lastVisit||0,
+      visitDate: rv.lastVisitDate || timestampToDateInputValue(rv.lastVisit),
+      visitTs: rv.lastVisit||0, _source:'legacy'
     }));
 
   const all = [...feedItems, ...legacyItems].sort((a,b)=>b.ts-a.ts);
@@ -1289,13 +1372,15 @@ function renderReviewFeedPage(){
       : `<div class="feed-comment feed-no-comment">코멘트 없음</div>`;
     const nicknameHtml = c.nickname ? `<span class="feed-nickname">${c.nickname}</span>` : `<span class="feed-nickname" style="color:#ccc">익명</span>`;
     const genreHtml = c.genre ? `<span class="feed-badge-genre">${c.genre}</span>` : '';
+    const visitDateHtml = c.visitDate ? `<span>방문 ${formatVisitDate(c.visitDate)}</span>` : '';
+    const timeHtml = timeStr ? `<span>${timeStr}</span>` : '';
     return `<div class="feed-card">
       <div class="feed-card-top">
         <span class="feed-restaurant">${c.name}</span>
         <span class="feed-stars">${starStr||'<span style="color:#ddd;font-size:11px">별점없음</span>'}</span>
       </div>
       ${commentHtml}
-      <div class="feed-meta">${nicknameHtml}${genreHtml}<span>${timeStr}</span></div>
+      <div class="feed-meta">${nicknameHtml}${genreHtml}${visitDateHtml}${timeHtml}</div>
     </div>`;
   }).join('');
 }
@@ -1399,7 +1484,7 @@ function openYesterdayReview(name){
               <span class="inline-review-stars">${starStr}</span>
             </div>
             ${c.comment?`<div class="inline-review-comment">"${c.comment}"</div>`:''}
-            <div class="inline-review-time">${c.ts?timeAgo(c.ts):''}</div>
+            <div class="inline-review-time">${reviewMetaText(c)}</div>
           </div>`;
         }).join('');
     listEl.style.display='block';
@@ -1411,6 +1496,7 @@ function openYesterdayReview(name){
 
   document.getElementById('yesterdayNicknameInput').value='';
   document.getElementById('yesterdayCommentInput').value='';
+  document.getElementById('yesterdayVisitDateInput').value=getTodayInputValue();
   renderYesterdayStars(0);
   selectedYesterdayStar=0;
   document.getElementById('yesterdayReviewBox').classList.add('show');
@@ -1437,11 +1523,14 @@ document.getElementById('btnSaveYesterday').addEventListener('click', async ()=>
   if(!selectedYesterdayName) return;
   const comment = document.getElementById('yesterdayCommentInput').value.trim();
   const nickname = document.getElementById('yesterdayNicknameInput').value.trim();
+  const visitDate = normalizeVisitDate(document.getElementById('yesterdayVisitDateInput').value);
   const star = selectedYesterdayStar;
-  if(star>0||comment||nickname) await saveToFirestore(selectedYesterdayName, star, comment, nickname);
+  if(star>0||comment||nickname) await saveToFirestore(selectedYesterdayName, star, comment, nickname, visitDate);
   closeYesterdayReview();
 });
 
+document.getElementById('visitDateInput').value = getTodayInputValue();
+document.getElementById('yesterdayVisitDateInput').value = getTodayInputValue();
 renderYesterdayBanner();
 
 </script>
